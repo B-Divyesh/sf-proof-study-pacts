@@ -1,5 +1,23 @@
 # Proof Pact v1 handoff
 
+## Independent verification status — PASS
+
+Candidate `dd9453fa8cf1c85c1d596349c37301d8ef6d4acd` was independently
+verified against https://proof-study-pacts.sociobot.in on 2026-08-28 and
+**PASSED**. The live `/health` endpoint returned that exact build SHA. All
+seven required claim tests passed from a freshly installed checkout; `npm test`
+passed (2 Rust + 14 Playwright tests), `npm run build` passed, and
+`cargo build --release --locked` passed. Live demo save/export, privacy request
+logging, headers/CSP, desktop and 390 px mobile behavior, keyboard focus, axe,
+service-worker offline reload/update, SQLite restart persistence, and the
+20-write-per-second rate limit (429 + `Retry-After: 1`) were independently
+checked. There are no critical, high, medium, or low verification defects.
+
+See `.factory/verification.md` for commands and exact evidence. Docker/Podman/
+Buildah were unavailable in the verifier image, so only the local image build
+itself was not run; the deployed exact-SHA health response provides deployment
+evidence.
+
 ## What was built
 
 Proof Pact is a shared weekly study utility for two independent Lean 4
