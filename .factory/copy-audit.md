@@ -1,7 +1,8 @@
 # Landing copy audit
 
-Audited 2026-08-28. Counts treat hyphenated terms as one word. No sentence is
-over 22 words. No banned word appears in visitor-facing landing copy.
+Audited 2026-08-28 after polish round 1. Counts treat hyphenated terms as one
+word. No sentence is over 22 words. No banned word appears in visitor-facing
+landing copy.
 
 | Words | Sentence |
 | ---: | --- |
@@ -10,12 +11,13 @@ over 22 words. No banned word appears in visitor-facing landing copy.
 | 7 | A ready pact opens in one click. |
 | 3 | Free to use. |
 | 5 | Partner-visible notes need consent. |
-| 7 | Lean checks the proof, not this app. |
+| 7 | Records work; run Lean to check it. |
+| 8 | Two attempts become one shared Markdown note. |
 | 4 | Make this week’s pact. |
 | 7 | Choose one public exercise. |
-| 7 | Your partner gets the complementary role. |
+| 10 | One person is Prover. The other is Explainer. |
 | 11 | I agree that my partner can read the notes I add to this pact. |
-| 8 | Your private editing link stays in this browser. |
+| 8 | This browser saves your private access link. |
 | 6 | How the pair routine works. |
 | 5 | Commit to one theorem. |
 | 9 | Pick a public Lean exercise and send the invite link. |
@@ -25,8 +27,8 @@ over 22 words. No banned word appears in visitor-facing landing copy.
 | 5 | Export the shared note. |
 | 10 | Keep the proof states, attempts, and explanations in Markdown. |
 | 6 | A routine, not a proof judge. |
-| 9 | Proof Pact does not solve, grade, or match strangers. |
-| 7 | Lean decides whether code checks. |
+| 4 | Proof Pact records your work. |
+| 6 | Run Lean to check it. |
 | 8 | Partners decide whether an explanation makes sense. |
 
 ## First-screen read-aloud
@@ -49,7 +51,7 @@ This states the job, audience, change, and first action in one breath.
 | downloadable record | Markdown note |
 | isolated seeded workspace | demo |
 | other learner | partner |
+| saved credential | private access link |
 
-Catalog description (88 characters): “Work through one Lean proof with a
-partner, record both attempts, and export the session.”
-
+Catalog description (91 characters): “Work through one Lean proof with a
+partner, record both attempts, and export a Markdown note.”

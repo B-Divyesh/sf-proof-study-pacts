@@ -36,7 +36,7 @@
   },
   {
     "id": "private-notes",
-    "claim": "Pact notes require a private member access key.",
+    "claim": "Only a private access link opens pact notes.",
     "where": "workspace, privacy page, README",
     "test": "npm test -- --grep @claim:private-notes",
     "sandbox": "fresh /demo workspace; request pact notes with a wrong key and assert HTTP 403"
@@ -47,5 +47,19 @@
     "where": "landing, invite screen, workspace, README",
     "test": "npm test -- --grep @claim:paired-roles",
     "sandbox": "two clean browser contexts; create, invite, consent, join, and assert both roles"
+  },
+  {
+    "id": "real-access-link-storage",
+    "claim": "This browser saves your private access link.",
+    "where": "landing pact form",
+    "test": "npm test -- --grep @claim:real-access-link-storage",
+    "sandbox": "fresh browser context; create a real pact, assert its namespaced local-storage key and that an unrelated key remains unchanged"
+  },
+  {
+    "id": "records-without-checking",
+    "claim": "Proof Pact records your work; run Lean to check it.",
+    "where": "landing limits, terms, README",
+    "test": "npm test -- --grep @claim:records-without-checking",
+    "sandbox": "fresh demo; save deliberately invalid Lean text and assert it appears as recorded work with no correctness result or non-product request"
   }
 ]

@@ -55,11 +55,21 @@ function setMeta(title: string, description: string, path: string): void {
   document.title = title;
   document.querySelector<HTMLMetaElement>('meta[name="description"]')!.content = description;
   document.querySelector<HTMLLinkElement>('link[rel="canonical"]')!.href = `${baseUrl}${path}`;
+  for (const [selector, value] of [
+    ['meta[property="og:title"]', title], ['meta[property="og:description"]', description],
+    ['meta[property="og:url"]', `${baseUrl}${path}`], ['meta[name="twitter:title"]', title],
+    ['meta[name="twitter:description"]', description]
+  ]) document.querySelector<HTMLMetaElement>(selector)!.content = value;
 }
 
 function navigate(path: string, replace = false): void {
-  if (replace) history.replaceState({}, '', path); else history.pushState({}, '', path);
-  render();
+  const scrollKey = `route-scroll:${location.pathname}${location.search}${location.hash}`;
+  const isDemoQuery = location.search.includes('demo=1');
+  const recordedScroll = isDemoQuery ? scrollY : Math.max(scrollY, Number(sessionStorage.getItem(scrollKey) || 0));
+  if (isDemoQuery) sessionStorage.removeItem(scrollKey); else sessionStorage.setItem(scrollKey, String(recordedScroll));
+  history.replaceState({ ...(history.state || {}), scrollY: recordedScroll }, '', location.href);
+  if (replace) history.replaceState({ scrollY: 0 }, '', path); else history.pushState({ scrollY: 0 }, '', path);
+  render(0);
 }
 
 async function api<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
@@ -77,48 +87,50 @@ async function api<T>(path: string, options: RequestInit = {}, token?: string): 
   return (type.includes('json') ? response.json() : response.text()) as Promise<T>;
 }
 
-function landing(): void {
-  setMeta('Proof Pact — Work through Lean proofs together', 'Make a weekly Lean proof pact, compare attempts, record proof states, and export one clear session note.', '/');
+function landing(restoreScroll = 0): void {
+  setMeta('Proof Pact — Work through Lean proofs together', 'Make a weekly Lean proof pact, compare attempts, record proof states, and export one Markdown note.', '/');
   const monday = new Date();
   monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
-  const week = monday.toISOString().slice(0, 10);
+  const prefill = JSON.parse(localStorage.getItem('pact:next-prefill') || 'null') as Partial<Pact & { creatorName: string; partnerName: string }> | null;
+  const week = prefill?.weekOf || monday.toISOString().slice(0, 10);
+  const recent = JSON.parse(localStorage.getItem('pact:recent') || '[]') as { id: string; title: string; weekOf: string }[];
   app.innerHTML = shell(`
     <main id="main">
       <section class="hero" aria-labelledby="page-title">
         <div class="hero-copy">
-          <p class="eyebrow"><span class="lamp" aria-hidden="true"></span>Pair protocol 01</p>
+          <p class="eyebrow"><span class="lamp" aria-hidden="true"></span>Weekly Lean routine</p>
           <h1 id="page-title" tabindex="-1">Work one Lean proof with a partner</h1>
           <p class="lede">For independent Lean learners who need a weekly routine for attempts, proof states, and clear explanations.</p>
           <div class="hero-actions"><a class="button primary" href="/demo" data-link>Try it with sample data</a><span>A ready pact opens in one click.</span></div>
-          <ul class="plain-facts" aria-label="Product facts"><li>Free to use</li><li>Partner-visible notes need consent</li><li>Lean checks the proof, not this app</li></ul>
+          <ul class="plain-facts" aria-label="Product facts"><li>Free to use</li><li>Partner-visible notes need consent</li><li>Records work; run Lean to check it</li></ul>
         </div>
         <figure class="hero-art">
           <picture><source media="(max-width: 700px)" srcset="/assets/hero-console-720.webp"><img src="/assets/hero-console-1280.webp" width="1280" height="853" alt="Two proof-work instruments connected to one shared theorem dial." fetchpriority="high" decoding="async"></picture>
-          <figcaption>Two attempts feed one shared explanation.</figcaption>
+          <figcaption>Two attempts become one shared Markdown note.</figcaption>
         </figure>
       </section>
 
       <section class="make-pact" id="make" aria-labelledby="make-title">
         <div class="section-number" aria-hidden="true">01</div>
-        <div class="section-intro"><p class="eyebrow">Set the weekly dial</p><h2 id="make-title">Make this week’s pact</h2><p>Choose one public exercise. Your partner gets the complementary role.</p></div>
+        <div class="section-intro"><p class="eyebrow">Create a pact</p><h2 id="make-title">Make this week’s pact</h2><p>Choose one public exercise. One person is Prover. The other is Explainer.</p></div>
         <form id="create-form" class="instrument-form">
           <div class="field-pair">
-            <label>Your name<input name="creatorName" autocomplete="name" minlength="2" maxlength="60" required></label>
-            <label>Partner name<input name="partnerName" autocomplete="off" minlength="2" maxlength="60" required></label>
+            <label>Your name<input name="creatorName" autocomplete="name" value="${esc(prefill?.creatorName || '')}" minlength="2" maxlength="60" required></label>
+            <label>Partner name<input name="partnerName" autocomplete="off" value="${esc(prefill?.partnerName || '')}" minlength="2" maxlength="60" required></label>
           </div>
           <label>Public Lean exercise<select name="exercise" id="exercise-select">${exercises.map((e, i) => `<option value="${i}">${esc(e.title)}</option>`).join('')}</select></label>
           <label>Exercise link<input name="exerciseUrl" id="exercise-url" type="url" value="${exercises[0].url}" required></label>
           <label>Theorem to attempt<textarea name="theorem" id="theorem" rows="3" maxlength="800" required>${esc(exercises[0].theorem)}</textarea></label>
           <label>Week of<input name="weekOf" type="date" value="${week}" required></label>
           <label class="check-row"><input name="consent" type="checkbox" required><span>I agree that my partner can read the notes I add to this pact.</span></label>
-          <div class="form-end"><button class="button primary" type="submit">Create pact and invite</button><p>Your private editing link stays in this browser.</p></div>
+          <div class="form-end"><button class="button primary" type="submit">Create pact and invite</button><p>This browser saves your private access link.</p></div>
           <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
         </form>
       </section>
 
       <section class="procedure" aria-labelledby="procedure-title">
         <div class="section-number" aria-hidden="true">02</div>
-        <div class="section-intro"><p class="eyebrow">Three readings</p><h2 id="procedure-title">How the pair routine works</h2></div>
+        <div class="section-intro"><p class="eyebrow">Three steps</p><h2 id="procedure-title">How the pair routine works</h2></div>
         <ol class="steps">
           <li><span>1</span><div><h3>Commit to one theorem</h3><p>Pick a public Lean exercise and send the invite link.</p></div></li>
           <li><span>2</span><div><h3>Bring separate attempts</h3><p>The Prover records code. The Explainer names each reasoning step.</p></div></li>
@@ -128,8 +140,9 @@ function landing(): void {
 
       <section class="limits" aria-labelledby="limits-title">
         <div class="limit-dial" aria-hidden="true"><span></span></div>
-        <div><p class="eyebrow">Instrument limits</p><h2 id="limits-title">A routine, not a proof judge</h2><p>Proof Pact does not solve, grade, or match strangers. Lean decides whether code checks. Partners decide whether an explanation makes sense.</p></div>
+        <div><p class="eyebrow">What Proof Pact does not do</p><h2 id="limits-title">A routine, not a proof judge</h2><p>Proof Pact records your work. Run Lean to check it. Partners decide whether an explanation makes sense.</p></div>
       </section>
+      ${recent.length ? `<section class="recent-pacts" aria-labelledby="recent-title"><p class="eyebrow">Your recent work</p><h2 id="recent-title">Return to a saved pact</h2><ul>${recent.map(item => `<li><a data-link href="/pact/${esc(item.id)}">${esc(item.title)} <span>Week of ${esc(item.weekOf)}</span></a></li>`).join('')}</ul></section>` : ''}
     </main>`);
 
   bindNavigation();
@@ -140,6 +153,7 @@ function landing(): void {
     document.querySelector<HTMLTextAreaElement>('#theorem')!.value = exercise.theorem;
   });
   document.querySelector<HTMLFormElement>('#create-form')!.addEventListener('submit', createPact);
+  if (restoreScroll >= 0) focusHeading(restoreScroll);
 }
 
 async function createPact(event: SubmitEvent): Promise<void> {
@@ -157,6 +171,7 @@ async function createPact(event: SubmitEvent): Promise<void> {
       weekOf: data.get('weekOf'), consent: data.get('consent') === 'on'
     }) });
     localStorage.setItem(`pact:${session.pact.id}:token`, session.memberToken);
+    rememberPact(session.pact);
     navigate(`/pact/${session.pact.id}`);
   } catch (reason) { status.textContent = (reason as Error).message; button.disabled = false; button.textContent = 'Create pact and invite'; }
 }
@@ -227,7 +242,7 @@ function renderWorkspace(pact: Pact, token: string, demo: boolean): void {
     <section class="record-panel" aria-labelledby="record-title"><div><p class="eyebrow">Your station · ${esc(pact.currentMember.role)}</p><h2 id="record-title">Record an independent attempt</h2><p>Paste what you tried. Explain why each key step should work.</p></div>
       <form id="attempt-form"><label>Lean proof attempt<textarea name="proofText" rows="8" maxlength="10000" required placeholder="by\n  ..."></textarea></label><label>Explanation in your own words<textarea name="explanation" rows="5" minlength="10" maxlength="4000" required></textarea></label><fieldset id="snapshots"><legend>Proof-state snapshots</legend><div class="snapshot-row"><label>Snapshot label<input name="snapshotLabel" value="First stuck state" maxlength="80" required></label><label>Proof state<textarea name="proofState" rows="4" maxlength="4000" required></textarea></label><button class="text-button remove-snapshot" type="button">Remove snapshot</button></div></fieldset><button class="button secondary" id="add-snapshot" type="button">Add another proof state</button><div class="form-end"><button class="button primary" type="submit">Save proof attempt</button><p>Both partners can read saved notes.</p></div><p class="form-status" role="status" aria-live="polite"></p></form>
     </section>
-    <section class="export-panel" aria-labelledby="export-title"><div><p class="eyebrow">Session output</p><h2 id="export-title">Keep one readable record</h2><p>The Markdown note includes the theorem, both roles, every attempt, and each proof state.</p></div><div class="export-actions"><button class="button primary" id="export-notes" type="button">Export Markdown note</button><button class="button secondary" id="finish-session" type="button" ${pact.attempts.length < 2 ? 'disabled' : ''}>Mark session complete</button><p class="form-status" role="status" aria-live="polite">${pact.attempts.length < 2 ? 'Two attempts are needed before the session can finish.' : ''}</p></div></section>
+    <section class="export-panel" aria-labelledby="export-title"><div><p class="eyebrow">Session output</p><h2 id="export-title">Keep one readable record</h2><p>The Markdown note includes the theorem, both roles, every attempt, and each proof state.</p></div><div class="export-actions"><button class="button primary" id="export-notes" type="button">Export Markdown note</button><button class="button secondary" id="finish-session" type="button" ${pact.attempts.length < 2 ? 'disabled' : ''}>Mark session complete</button>${!demo && pact.status === 'complete' ? '<button class="button secondary" id="next-week" type="button">Create next week’s pact</button>' : ''}<p class="form-status" role="status" aria-live="polite">${pact.attempts.length < 2 ? 'Two attempts are needed before the session can finish.' : ''}</p></div></section>
   </main>`, demo);
   bindNavigation(); if (demo) bindDemoActions();
   document.querySelector('#copy-invite')?.addEventListener('click', () => copyText(invite, 'Invite link copied.'));
@@ -237,6 +252,8 @@ function renderWorkspace(pact: Pact, token: string, demo: boolean): void {
   document.querySelector<HTMLFormElement>('#attempt-form')!.addEventListener('submit', event => saveAttempt(event, pact, token, demo));
   document.querySelector<HTMLButtonElement>('#export-notes')!.addEventListener('click', () => exportNotes(pact, token));
   document.querySelector<HTMLButtonElement>('#finish-session')!.addEventListener('click', () => finishSession(pact, token, demo));
+  document.querySelector<HTMLButtonElement>('#next-week')?.addEventListener('click', () => startNextWeek(pact));
+  if (!demo) rememberPact(pact);
   focusHeading();
 }
 
@@ -301,10 +318,10 @@ function terms(): void {
   bindNavigation(); focusHeading();
 }
 
-function notFound(): void {
+function notFound(restoreScroll = 0): void {
   setMeta('Page not found — Proof Pact', 'Return to Proof Pact and make a weekly Lean study pact.', '/404');
   app.innerHTML = shell(`<main id="main" class="not-found"><div class="broken-dial" aria-hidden="true"><span></span></div><p class="eyebrow">Reading 404</p><h1 tabindex="-1">This dial points nowhere</h1><p>The page may have moved, or the pact link is incomplete.</p><a class="button primary" href="/" data-link>Return to Proof Pact</a></main>`);
-  bindNavigation(); focusHeading();
+  bindNavigation(); focusHeading(restoreScroll);
 }
 
 function loading(title: string, note: string): void {
@@ -330,32 +347,52 @@ function bindNavigation(): void {
   }));
 }
 
-function focusHeading(): void {
+function focusHeading(restoreScroll = 0): void {
   const heading = document.querySelector<HTMLHeadingElement>('main h1');
   if (heading) { heading.focus({ preventScroll: true }); routeStatus.textContent = heading.textContent || ''; }
-  scrollTo({ top: 0, behavior: 'auto' });
+  scrollTo({ top: restoreScroll, behavior: 'auto' });
+  requestAnimationFrame(() => scrollTo({ top: restoreScroll, behavior: 'auto' }));
+}
+
+function rememberPact(pact: Pact): void {
+  if (pact.demo) return;
+  const saved = JSON.parse(localStorage.getItem('pact:recent') || '[]') as { id: string; title: string; weekOf: string }[];
+  localStorage.setItem('pact:recent', JSON.stringify([{ id: pact.id, title: pact.exerciseTitle, weekOf: pact.weekOf }, ...saved.filter(item => item.id !== pact.id)].slice(0, 8)));
+}
+
+function startNextWeek(pact: Pact): void {
+  const next = new Date(`${pact.weekOf}T12:00:00`); next.setDate(next.getDate() + 7);
+  localStorage.setItem('pact:next-prefill', JSON.stringify({ creatorName: pact.currentMember.name, partnerName: pact.members.find(member => member.name !== pact.currentMember.name)?.name || '', exerciseTitle: pact.exerciseTitle, exerciseUrl: pact.exerciseUrl, theorem: pact.theorem, weekOf: next.toISOString().slice(0, 10) }));
+  navigate('/#make');
+  setTimeout(() => document.querySelector('#make')?.scrollIntoView(), 0);
 }
 
 function formatDate(date: string): string {
   return new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-function render(): void {
+function render(restoreScroll = 0): void {
   const path = location.pathname;
-  if (location.search.includes('demo=1')) { navigate('/demo', true); return; }
-  if (path === '/') landing();
+  if (location.search.includes('demo=1')) { sessionStorage.removeItem(`route-scroll:${location.pathname}${location.search}${location.hash}`); navigate('/demo', true); return; }
+  if (path === '/') landing(restoreScroll);
   else if (path === '/demo') demoPage();
   else if (path === '/privacy') privacy();
   else if (path === '/terms') terms();
-  else if (path === '/404' || path === '/404.html') notFound();
+  else if (path === '/404' || path === '/404.html') notFound(restoreScroll);
   else if (/^\/pact\/[^/]+$/.test(path)) pactPage(path.split('/')[2]);
   else if (/^\/join\/[^/]+$/.test(path)) joinPage(path.split('/')[2]);
-  else notFound();
+  else notFound(restoreScroll);
 }
 
-addEventListener('popstate', render);
-addEventListener('online', render);
-addEventListener('offline', render);
+addEventListener('popstate', event => {
+  const stored = Number(sessionStorage.getItem(`route-scroll:${location.pathname}${location.search}${location.hash}`) || 0);
+  const stateScroll = (event.state as { scrollY?: number } | null)?.scrollY || 0;
+  render(Math.max(stored, stateScroll));
+});
+addEventListener('scroll', () => {
+  if (!location.search.includes('demo=1')) sessionStorage.setItem(`route-scroll:${location.pathname}${location.search}${location.hash}`, String(scrollY));
+}, { passive: true });
+addEventListener('online', () => render());
+addEventListener('offline', () => render());
 if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => undefined));
-render();
-
+render(-1);

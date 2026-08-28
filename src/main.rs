@@ -20,10 +20,7 @@ use std::{
     time::{Duration as StdDuration, Instant},
 };
 use tokio::sync::Mutex;
-use tower_http::{
-    services::{ServeDir, ServeFile},
-    trace::TraceLayer,
-};
+use tower_http::{services::ServeDir, trace::TraceLayer};
 use tracing::{info, warn};
 
 const BUILD_SHA: &str = match option_env!("BUILD_SHA") {
@@ -35,6 +32,7 @@ const BUILD_SHA: &str = match option_env!("BUILD_SHA") {
 struct AppState {
     db: SqlitePool,
     limits: Arc<Mutex<HashMap<String, VecDeque<Instant>>>>,
+    static_dir: PathBuf,
 }
 
 #[derive(Debug, Serialize)]
@@ -199,16 +197,23 @@ async fn main() {
     migrate(&db).await.expect("migrate database");
     cleanup_expired(&db).await.ok();
 
+    let static_dir = std::env::var("STATIC_DIR").unwrap_or_else(|_| "frontend/dist".into());
     let state = AppState {
         db,
         limits: Arc::new(Mutex::new(HashMap::new())),
+        static_dir: PathBuf::from(&static_dir),
     };
-    let static_dir = std::env::var("STATIC_DIR").unwrap_or_else(|_| "frontend/dist".into());
-    let index_path = PathBuf::from(&static_dir).join("index.html");
-    let files = ServeDir::new(&static_dir).fallback(ServeFile::new(index_path));
 
     let app = Router::new()
         .route("/health", get(health))
+        .route("/", get(spa_shell))
+        .route("/demo", get(spa_shell))
+        .route("/privacy", get(spa_shell))
+        .route("/terms", get(spa_shell))
+        .route("/404", get(spa_shell))
+        .route("/404.html", get(spa_shell))
+        .route("/pact/{id}", get(spa_shell))
+        .route("/join/{id}", get(spa_shell))
         .route("/api/demo", post(create_demo))
         .route("/api/pacts", post(create_pact))
         .route("/api/pacts/{id}", get(get_pact))
@@ -217,7 +222,13 @@ async fn main() {
         .route("/api/pacts/{id}/attempts", post(save_attempt))
         .route("/api/pacts/{id}/complete", post(complete_pact))
         .route("/api/pacts/{id}/export", post(export_pact))
-        .fallback_service(files)
+        .nest_service("/assets", ServeDir::new(PathBuf::from(&static_dir).join("assets")))
+        .route("/favicon.svg", get(|State(state): State<AppState>| async move { named_static(&state, "favicon.svg", "image/svg+xml").await }))
+        .route("/apple-touch-icon.png", get(|State(state): State<AppState>| async move { named_static(&state, "apple-touch-icon.png", "image/png").await }))
+        .route("/robots.txt", get(|State(state): State<AppState>| async move { named_static(&state, "robots.txt", "text/plain; charset=utf-8").await }))
+        .route("/sitemap.xml", get(|State(state): State<AppState>| async move { named_static(&state, "sitemap.xml", "application/xml; charset=utf-8").await }))
+        .route("/sw.js", get(|State(state): State<AppState>| async move { named_static(&state, "sw.js", "application/javascript; charset=utf-8").await }))
+        .fallback(not_found_shell)
         .layer(middleware::from_fn(security_headers))
         .layer(middleware::from_fn_with_state(state.clone(), rate_limit))
         .layer(TraceLayer::new_for_http())
@@ -291,6 +302,37 @@ async fn cleanup_expired(db: &SqlitePool) -> Result<(), sqlx::Error> {
 
 async fn health() -> Json<serde_json::Value> {
     Json(serde_json::json!({"status": "ok", "buildSha": BUILD_SHA}))
+}
+
+async fn static_shell(state: &AppState, status: StatusCode) -> Response {
+    match tokio::fs::read(state.static_dir.join("index.html")).await {
+        Ok(html) => (
+            status,
+            [(header::CONTENT_TYPE, HeaderValue::from_static("text/html; charset=utf-8"))],
+            html,
+        )
+            .into_response(),
+        Err(_) => error(StatusCode::SERVICE_UNAVAILABLE, "The application shell is unavailable. Try again."),
+    }
+}
+
+async fn named_static(state: &AppState, name: &str, content_type: &'static str) -> Response {
+    match tokio::fs::read(state.static_dir.join(name)).await {
+        Ok(file) => (
+            StatusCode::OK,
+            [(header::CONTENT_TYPE, HeaderValue::from_static(content_type))],
+            file,
+        ).into_response(),
+        Err(_) => error(StatusCode::NOT_FOUND, "This file was not found."),
+    }
+}
+
+async fn spa_shell(State(state): State<AppState>) -> Response {
+    static_shell(&state, StatusCode::OK).await
+}
+
+async fn not_found_shell(State(state): State<AppState>) -> Response {
+    static_shell(&state, StatusCode::NOT_FOUND).await
 }
 
 async fn create_pact(State(state): State<AppState>, Json(input): Json<CreatePact>) -> Response {

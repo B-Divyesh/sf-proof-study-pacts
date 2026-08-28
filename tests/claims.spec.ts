@@ -18,7 +18,10 @@ test('@claim:free-access landing and demo open without an account or payment ste
 });
 
 test('@claim:demo-sandbox sample data opens in an isolated session workspace', async ({ page }) => {
-  const session = await openDemo(page);
+  await page.goto('/?demo=1');
+  await expect(page).toHaveURL(/\/demo$/);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Natural Number Game');
+  const session = JSON.parse(await page.evaluate(() => sessionStorage.getItem('demo:pact') || '{}')) as { id: string; token: string };
   await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
   expect(session.id).toMatch(/^demo-/);
   expect(session.token.length).toBeGreaterThan(30);
@@ -72,6 +75,35 @@ test('@claim:private-notes pact notes reject a wrong access key', async ({ page 
   expect(response.status()).toBe(403);
 });
 
+test('@claim:real-access-link-storage creating a pact keeps its private access link in this browser', async ({ page }) => {
+  const requests: string[] = [];
+  page.on('request', request => requests.push(request.url()));
+  await page.goto('/');
+  await page.evaluate(() => localStorage.setItem('unrelated-sentinel', 'keep'));
+  await page.getByLabel('Your name').fill('Ada');
+  await page.getByLabel('Partner name').fill('Emmy');
+  await page.getByLabel(/I agree that my partner/).check();
+  await page.getByRole('button', { name: 'Create pact and invite' }).click();
+  await expect(page.getByText('Ada', { exact: true })).toBeVisible();
+  const keys = await page.evaluate(() => Object.keys(localStorage));
+  expect(keys).toContain('unrelated-sentinel');
+  expect(keys.filter(key => /^pact:[a-z0-9]+:token$/.test(key))).toHaveLength(1);
+  expect(requests.every(url => new URL(url).origin === 'http://127.0.0.1:4173')).toBeTruthy();
+});
+
+test('@claim:records-without-checking invalid Lean is recorded without a correctness result', async ({ page }) => {
+  const external: string[] = [];
+  page.on('request', request => { if (new URL(request.url()).origin !== 'http://127.0.0.1:4173') external.push(request.url()); });
+  await openDemo(page);
+  await page.getByLabel('Lean proof attempt').fill('by\n  this is deliberately not Lean');
+  await page.getByLabel('Explanation in your own words').fill('This is a deliberately invalid example for the study record.');
+  await page.getByLabel('Proof state').fill('⊢ 2 + 0 = 2');
+  await page.getByRole('button', { name: 'Save proof attempt' }).click();
+  await expect(page.getByText('this is deliberately not Lean')).toBeVisible();
+  await expect(page.getByText(/proof accepted|proof rejected|correctness result/i)).toHaveCount(0);
+  expect(external).toEqual([]);
+});
+
 test('@claim:paired-roles creation and consent assign complementary roles', async ({ browser }) => {
   const creatorContext = await browser.newContext();
   const creator = await creatorContext.newPage();
@@ -109,7 +141,7 @@ test('routes have titles, one h1, working deep links, and no console errors', as
   const errors: string[] = [];
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
   page.on('pageerror', exception => errors.push(exception.message));
-  for (const route of ['/', '/privacy', '/terms', '/demo', '/missing-page']) {
+  for (const route of ['/', '/privacy', '/terms', '/demo']) {
     const response = await page.goto(route);
     expect(response?.status()).toBe(200);
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
@@ -117,6 +149,51 @@ test('routes have titles, one h1, working deep links, and no console errors', as
     expect(await page.title()).toContain('Proof Pact');
   }
   expect(errors).toEqual([]);
+  const missing = await page.goto('/missing-page');
+  expect(missing?.status()).toBe(404);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('This dial points nowhere');
+});
+
+test('direct routes update social metadata and history restores focus, announcement, and scroll', async ({ page }) => {
+  for (const [route, title] of [['/demo', 'Demo — Proof Pact'], ['/privacy', 'Privacy — Proof Pact'], ['/terms', 'Terms — Proof Pact'], ['/missing-page', 'Page not found — Proof Pact']]) {
+    await page.goto(route);
+    expect(await page.locator('meta[property="og:title"]').getAttribute('content')).toBe(title);
+    expect(await page.locator('meta[name="twitter:title"]').getAttribute('content')).toBe(title);
+    expect(await page.locator('meta[property="og:url"]').getAttribute('content')).toBe(`https://proof-study-pacts.sociobot.in${route === '/missing-page' ? '/404' : route}`);
+  }
+  await page.goto('/');
+  await page.locator('#make').scrollIntoViewIfNeeded();
+  const beforeScroll = await page.evaluate(() => scrollY);
+  expect(beforeScroll).toBeGreaterThan(0);
+  await page.getByRole('link', { name: 'Privacy' }).first().click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Privacy for pact partners');
+  expect(Number(await page.evaluate(() => sessionStorage.getItem('route-scroll:/')))).toBeGreaterThanOrEqual(beforeScroll - 1);
+  await page.goBack();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Work one Lean proof with a partner');
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
+  expect(await page.locator('#route-status').textContent()).toContain('Work one Lean proof');
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThanOrEqual(beforeScroll - 1);
+});
+
+test('completed pact starts a prefilled next-week pact and keeps local history', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Your name').fill('Ada'); await page.getByLabel('Partner name').fill('Emmy'); await page.getByLabel(/I agree that my partner/).check();
+  await page.getByRole('button', { name: 'Create pact and invite' }).click();
+  const privateLink = await page.getByRole('button', { name: 'Copy my private link' }).getAttribute('data-private-link');
+  const invite = await page.getByLabel('Partner invite link').inputValue();
+  const partner = await page.context().newPage();
+  await partner.goto(invite); await partner.getByLabel(/I agree that my partner/).check(); await partner.getByRole('button', { name: 'Join pact as Explainer' }).click();
+  for (const current of [page, partner]) {
+    await current.getByLabel('Lean proof attempt').fill('by\n  rfl'); await current.getByLabel('Explanation in your own words').fill('Both sides reduce to the same natural number expression.'); await current.getByLabel('Proof state').fill('⊢ 1 = 1'); await current.getByRole('button', { name: 'Save proof attempt' }).click();
+  }
+  await page.goto(privateLink!);
+  await page.getByRole('button', { name: 'Mark session complete' }).click();
+  await expect(page.getByRole('button', { name: 'Create next week’s pact' })).toBeVisible();
+  await page.getByRole('button', { name: 'Create next week’s pact' }).click();
+  await expect(page.getByLabel('Your name')).toHaveValue('Ada');
+  await expect(page.getByLabel('Partner name')).toHaveValue('Emmy');
+  await expect(page.getByRole('heading', { name: 'Return to a saved pact' })).toBeVisible();
+  await partner.close();
 });
 
 test('write endpoints return 429 with Retry-After during a burst', async ({ request }) => {
