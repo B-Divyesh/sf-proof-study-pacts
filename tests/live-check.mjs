@@ -25,8 +25,10 @@ const page = await mobile.newPage();
 page.on('request', value => requestOrigins.add(new URL(value.url()).origin));
 const errors = [];
 page.on('console', message => {
-  const expectedMissingDocument = new URL(page.url()).pathname === '/missing-page' && message.text().includes('status of 404');
-  if (message.type() === 'error' && !expectedMissingDocument) errors.push(message.text());
+  const path = new URL(page.url()).pathname;
+  const expectedNotFound = ['/missing-page', '/pact/missing-review-4', '/join/missing-review-4'].includes(path)
+    && message.text().includes('status of 404');
+  if (message.type() === 'error' && !expectedNotFound) errors.push(message.text());
 });
 page.on('pageerror', error => errors.push(error.message));
 
@@ -109,6 +111,7 @@ for (const [route, title, canonicalPath, heading] of routeExpectations) {
   check(await page.locator('meta[property="og:title"]').getAttribute('content') === title, `${route} OG title is wrong`);
   check(await page.locator('meta[name="twitter:title"]').getAttribute('content') === title, `${route} Twitter title is wrong`);
   check(await page.locator('link[rel="canonical"]').getAttribute('href') === `${baseURL}${canonicalPath}`, `${route} canonical is wrong`);
+  if (route === '/missing-page') await page.screenshot({ path: `${evidenceDir}/not-found-mobile.png`, fullPage: true });
   const axe = await new AxeBuilder({ page }).analyze();
   check(axe.violations.filter(item => ['serious', 'critical'].includes(item.impact)).length === 0, `${route} has serious axe violations`);
   const undersized = await page.locator('a, button, input, textarea, select, summary').evaluateAll(elements => elements.flatMap(element => {
@@ -122,13 +125,14 @@ for (const [route, title, canonicalPath, heading] of routeExpectations) {
 check((await page.getByText(/Reading 404|This dial points nowhere/i).count()) === 0, '404 metaphor remains');
 
 await page.evaluate(() => localStorage.setItem('pact:missing-review-4:token', 'missing-key'));
-for (const [route, heading] of [['/pact/missing-review-4', 'Your pact did not load'], ['/join/missing-review-4', 'This invitation did not load']]) {
+for (const [route, heading, screenshot] of [['/pact/missing-review-4', 'Your pact did not load', 'pact-error-mobile.png'], ['/join/missing-review-4', 'This invitation did not load', 'join-error-mobile.png']]) {
   await page.goto(`${baseURL}${route}`, { waitUntil: 'networkidle' });
   await page.getByRole('heading', { level: 1, name: heading }).waitFor();
   check((await page.locator('.error-page > .eyebrow').count()) === 0, `${route} has a decorative error label`);
   check((await page.getByText('The signal stopped').count()) === 0, `${route} retains the error metaphor`);
   check((await page.getByRole('alert').textContent()).includes('This pact was not found'), `${route} lacks a specific error reason`);
   check((await page.getByRole('link', { name: 'Return home' }).count()) === 1, `${route} lacks its recovery action`);
+  await page.screenshot({ path: `${evidenceDir}/${screenshot}`, fullPage: true });
 }
 await page.goto(`${baseURL}/privacy`);
 check((await page.getByRole('link', { name: 'privacy@sociobot.in' }).boundingBox()).height >= 44, 'privacy email target is undersized');
