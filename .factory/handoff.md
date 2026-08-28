@@ -36,10 +36,10 @@ field are rejected.
 - Lighthouse 12.8.2 mobile: performance 100, accessibility 100, LCP 1.3 s,
   CLS 0, TBT 20 ms. Desktop: performance 100, accessibility 100, LCP 0.4 s,
   CLS 0, TBT 0 ms.
-- ACR build `chm0`: PASS. `/health` returns build SHA
-  `067068962eebc04a59039daa0bc19e9315e5b748`.
-- Azure deployment: min replicas 1, max replicas 1. Eight reads before and
-  eight reads after a cross-connection save all
+- Final ACR build `chm5`: PASS. `/health` returns build SHA
+  `b37ebdb8a24933e24750295c3c2e01b853c911c2`.
+- Azure revision `sf-proof-study-pacts--0000006`: min replicas 1, max replicas
+  1. Eight reads before and eight reads after a cross-connection save all
   retained the demo; cross-connection export retained the new proof state.
 - Live screenshots: `/tmp/proof-pact-polish-2-live/landing-mobile.png`,
   `/tmp/proof-pact-polish-2-live/landing-desktop.png`, and
