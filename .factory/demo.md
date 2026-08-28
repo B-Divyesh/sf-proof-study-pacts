@@ -1,7 +1,9 @@
 # Proof Pact demo
 
 - URL: `http://localhost:8080/demo` locally, or
-  `https://proof-study-pacts.sociobot.in/demo` after deployment.
+  `https://proof-study-pacts.sociobot.in/demo` after deployment. Opening
+  `/?demo=1` is a supported one-click alias and immediately replaces the URL
+  with `/demo`.
 - Sample: Mira and Theo work on Natural Number Game's `add_zero` exercise.
   Their pact includes two roles, two independent attempts, and two saved proof
   states.
