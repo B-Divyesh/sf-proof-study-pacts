@@ -1,0 +1,9 @@
+{
+  "navigationFallback": { "rewrite": "/index.html", "exclude": ["/assets/*", "*.js", "*.css", "*.png", "*.webp", "*.svg"] },
+  "responseOverrides": { "404": { "rewrite": "/404.html" } },
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
+  }
+}
+

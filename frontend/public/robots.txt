@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Sitemap: https://proof-study-pacts.sociobot.in/sitemap.xml
+

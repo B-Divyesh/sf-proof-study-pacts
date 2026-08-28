@@ -1,5 +1,10 @@
 node_modules/
+target/
 dist/
+frontend/dist/
+test-results/
+playwright-report/
+*.db
 .env
 *.log
 graphify-out/

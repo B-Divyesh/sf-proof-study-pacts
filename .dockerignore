@@ -1,0 +1,9 @@
+.git
+.github
+node_modules
+target
+frontend/dist
+test-results
+assets/src/*.png
+*.db
+
