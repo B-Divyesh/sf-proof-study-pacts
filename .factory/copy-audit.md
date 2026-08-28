@@ -1,6 +1,6 @@
 # Landing copy audit
 
-Audited 2026-08-28 after polish round 3. Counts treat hyphenated terms as one
+Audited 2026-08-28 during polish round 4. Counts treat hyphenated terms as one
 word. No sentence is over 22 words. No banned word appears in visitor-facing
 landing copy.
 
@@ -55,5 +55,20 @@ This states the job, audience, change, and first action in one breath.
 | other learner | partner |
 | saved credential | private access link |
 
-Catalog description (83 characters): “Work through a Lean proof with a partner
-and export both attempts as a Markdown note.”
+## Error pages
+
+| Words | Type | Exact text |
+| ---: | --- | --- |
+| 3 | 404 h1 | Page not found. |
+| 10 | 404 recovery | The page may have moved, or the pact link is incomplete. |
+| 4 | 404 action | Return to Proof Pact. |
+| 5 | pact error h1 | Your pact did not load. |
+| 5 | invitation error h1 | This invitation did not load. |
+| 11 | missing-pact reason | This pact was not found. Ask your partner for a fresh link. |
+| 2 | error action | Return home. |
+
+Error pages have no decorative mood labels. Each heading names the problem,
+and each page gives a specific reason and recovery action.
+
+Catalog description (95 characters): “Build a weekly Lean proof routine with
+a partner, then export both attempts as a Markdown note.”

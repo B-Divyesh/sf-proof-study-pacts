@@ -323,7 +323,7 @@ function terms(): void {
 
 function notFound(restoreScroll = 0): void {
   setMeta('Page not found — Proof Pact', 'Return to Proof Pact and make a weekly Lean study pact.', '/404');
-  app.innerHTML = shell(`<main id="main" class="not-found"><div class="broken-dial" aria-hidden="true"><span></span></div><p class="eyebrow">Reading 404</p><h1 tabindex="-1">This dial points nowhere</h1><p>The page may have moved, or the pact link is incomplete.</p><a class="button primary" href="/" data-link>Return to Proof Pact</a></main>`);
+  app.innerHTML = shell(`<main id="main" class="not-found"><div class="broken-dial" aria-hidden="true"><span></span></div><h1 tabindex="-1">Page not found</h1><p>The page may have moved, or the pact link is incomplete.</p><a class="button primary" href="/" data-link>Return to Proof Pact</a></main>`);
   bindNavigation(); focusHeading(restoreScroll);
 }
 
@@ -334,7 +334,7 @@ function loading(title: string, note: string): void {
 
 function renderError(title: string, detail: string, href: string, label: string): void {
   setMeta('Problem — Proof Pact', detail, location.pathname);
-  app.innerHTML = shell(`<main id="main" class="error-page"><p class="eyebrow">The signal stopped</p><h1 tabindex="-1">${esc(title)}</h1><p role="alert">${esc(detail)}</p><a class="button primary" href="${esc(href)}" data-link>${esc(label)}</a></main>`);
+  app.innerHTML = shell(`<main id="main" class="error-page"><h1 tabindex="-1">${esc(title)}</h1><p role="alert">${esc(detail)}</p><a class="button primary" href="${esc(href)}" data-link>${esc(label)}</a></main>`);
   bindNavigation(); focusHeading();
 }
 

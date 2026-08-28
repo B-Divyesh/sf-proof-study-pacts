@@ -94,16 +94,17 @@ check(JSON.parse(await stalePage.evaluate(() => sessionStorage.getItem('demo:pac
 await staleContext.close();
 
 const routeExpectations = [
-  ['/', 'Proof Pact — Work through Lean proofs together', '/'],
-  ['/demo', 'Demo — Proof Pact', '/demo'],
-  ['/privacy', 'Privacy — Proof Pact', '/privacy'],
-  ['/terms', 'Terms — Proof Pact', '/terms'],
-  ['/missing-page', 'Page not found — Proof Pact', '/404']
+  ['/', 'Proof Pact — Work through Lean proofs together', '/', 'Work one Lean proof with a partner'],
+  ['/demo', 'Demo — Proof Pact', '/demo', 'Natural Number Game — Add zero'],
+  ['/privacy', 'Privacy — Proof Pact', '/privacy', 'Privacy for pact partners'],
+  ['/terms', 'Terms — Proof Pact', '/terms', 'Terms for using Proof Pact'],
+  ['/missing-page', 'Page not found — Proof Pact', '/404', 'Page not found']
 ];
-for (const [route, title, canonicalPath] of routeExpectations) {
+for (const [route, title, canonicalPath, heading] of routeExpectations) {
   const response = await page.goto(`${baseURL}${route}`, { waitUntil: 'networkidle' });
   check(response?.status() === (route === '/missing-page' ? 404 : 200), `${route} returned ${response?.status()}`);
   check((await page.locator('main h1').count()) === 1, `${route} does not have one h1`);
+  check(await page.locator('main h1').textContent() === heading, `${route} h1 is wrong`);
   check(await page.title() === title, `${route} title is wrong`);
   check(await page.locator('meta[property="og:title"]').getAttribute('content') === title, `${route} OG title is wrong`);
   check(await page.locator('meta[name="twitter:title"]').getAttribute('content') === title, `${route} Twitter title is wrong`);
@@ -117,6 +118,17 @@ for (const [route, title, canonicalPath] of routeExpectations) {
     return rect.width < 44 || rect.height < 44 ? [element.outerHTML.slice(0, 120)] : [];
   }));
   check(undersized.length === 0, `${route} has undersized targets: ${undersized.join(', ')}`);
+}
+check((await page.getByText(/Reading 404|This dial points nowhere/i).count()) === 0, '404 metaphor remains');
+
+await page.evaluate(() => localStorage.setItem('pact:missing-review-4:token', 'missing-key'));
+for (const [route, heading] of [['/pact/missing-review-4', 'Your pact did not load'], ['/join/missing-review-4', 'This invitation did not load']]) {
+  await page.goto(`${baseURL}${route}`, { waitUntil: 'networkidle' });
+  await page.getByRole('heading', { level: 1, name: heading }).waitFor();
+  check((await page.locator('.error-page > .eyebrow').count()) === 0, `${route} has a decorative error label`);
+  check((await page.getByText('The signal stopped').count()) === 0, `${route} retains the error metaphor`);
+  check((await page.getByRole('alert').textContent()).includes('This pact was not found'), `${route} lacks a specific error reason`);
+  check((await page.getByRole('link', { name: 'Return home' }).count()) === 1, `${route} lacks its recovery action`);
 }
 await page.goto(`${baseURL}/privacy`);
 check((await page.getByRole('link', { name: 'privacy@sociobot.in' }).boundingBox()).height >= 44, 'privacy email target is undersized');

@@ -1,1 +1,1 @@
-Work through a Lean proof with a partner and export both attempts as a Markdown note.
+Build a weekly Lean proof routine with a partner, then export both attempts as a Markdown note.

@@ -298,7 +298,32 @@ test('routes have titles, one h1, working deep links, and no console errors', as
   expect(errors).toEqual([]);
   const missing = await page.goto('/missing-page');
   expect(missing?.status()).toBe(404);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('This dial points nowhere');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Page not found');
+  await expect(page.getByText('The page may have moved, or the pact link is incomplete.')).toBeVisible();
+  await expect(page.getByText(/Reading 404|This dial points nowhere/i)).toHaveCount(0);
+});
+
+test('pact and invitation errors use specific recovery copy without decorative labels', async ({ browser }) => {
+  const pactContext = await browser.newContext();
+  await pactContext.addInitScript(() => localStorage.setItem('pact:missing-review-4:token', 'missing-key'));
+  const pactPage = await pactContext.newPage();
+  await pactPage.goto('/pact/missing-review-4');
+  await expect(pactPage.getByRole('heading', { level: 1 })).toHaveText('Your pact did not load');
+  await expect(pactPage.getByRole('alert')).toContainText('This pact was not found. Ask your partner for a fresh link.');
+  await expect(pactPage.getByRole('link', { name: 'Return home' })).toBeVisible();
+  await expect(pactPage.getByText('The signal stopped')).toHaveCount(0);
+  await expect(pactPage.locator('.error-page > .eyebrow')).toHaveCount(0);
+  await pactContext.close();
+
+  const joinContext = await browser.newContext();
+  const joinPage = await joinContext.newPage();
+  await joinPage.goto('/join/missing-review-4');
+  await expect(joinPage.getByRole('heading', { level: 1 })).toHaveText('This invitation did not load');
+  await expect(joinPage.getByRole('alert')).toContainText('This pact was not found. Ask your partner for a fresh link.');
+  await expect(joinPage.getByRole('link', { name: 'Return home' })).toBeVisible();
+  await expect(joinPage.getByText('The signal stopped')).toHaveCount(0);
+  await expect(joinPage.locator('.error-page > .eyebrow')).toHaveCount(0);
+  await joinContext.close();
 });
 
 test('direct routes update social metadata and history restores focus, announcement, and scroll', async ({ page }) => {
