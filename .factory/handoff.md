@@ -1,57 +1,64 @@
-# Adversarial review 2 handoff
+# Polish round 2 handoff
 
 ## Outcome
 
-Completed a read-only product review of live build
-`5d6343eb462b6bd2cb89548401e148150a4014df`. The verdict in
-`.factory/review-2.md` is **FAIL**: six new findings and reopened `F-1-4`.
-No product code was changed.
+All findings in `.factory/review-1.md` and `.factory/review-2.md` are resolved.
+The mid-century instrument-panel identity is unchanged. The production release
+includes repair implementation `067068962eebc04a59039daa0bc19e9315e5b748` at
+`https://proof-study-pacts.sociobot.in`.
 
-The primary blocker is deployed backend state: a demo created successfully on
-one request returns 404 on the next authenticated read. A cold browser reload
-changed a complete sample workspace into “The sample pact did not load.” The
-behavior reproduced across six fresh demo IDs and can also prevent export.
+The demo now replaces missing or expired sessions automatically. Reset and
+Start for real remain isolated from real browser data. Production is fixed at
+one replica so its local SQLite store cannot split across responders. Raising
+the replica count requires a shared datastore first.
 
-## Verification performed
+The claim contract now includes partner note sharing, the stored-data
+inventory, and offline page access. Export coverage asserts both exact
+attempts, explanations, roles, the theorem, and every proof state. Privacy
+copy lists persisted operational fields, and requests containing an email
+field are rejected.
 
-- Cold live visits at 390 × 844 and 1440 × 900, before scrolling.
-- One-click demo entry, seeded data, banner, Reset demo, Start for real,
-  storage namespace, and real-data sentinel checks.
-- Live request logging through demo save/export; all requests were same-origin.
-- Live route metadata, 404 status, history focus/announcement/scroll, link
-  crawl, viewport fit, and interactive-target measurements.
-- Axe checks on `/`, `/demo`, `/privacy`, `/terms`, and a missing route: zero
-  serious or critical violations.
-- `/opt/fleet/lib/verify-url.sh`: PASS with no console errors.
-- Fresh clone at `/tmp/proof-pact-review-2-clean.YCirwY`: every exact command
-  in `.factory/claims.json` passed separately after `npm ci`.
-- Full fresh-clone `npm test`: PASS — two Rust tests and 20 Playwright tests.
-- Production build output: 26.89 kB JS raw / 8.77 kB gzip.
-- Every `F-1-1` through `F-1-18` finding was rechecked against live behavior
-  and source; `F-1-4` is reopened because policy email links remain 17 px high.
+## Verification
 
-Run the repository checks with:
+- `npm test`: PASS — 3 Rust tests and 26 Playwright tests.
+- `npm run build`: PASS — `frontend/dist/` produced 27.29 kB raw / 8.94 kB
+  gzip JavaScript and 16.88 kB raw / 4.61 kB gzip CSS.
+- Every one of the 12 exact `.factory/claims.json` commands: PASS from clean
+  clone `/tmp/proof-pact-polish-2-clean.wY5UA3`. Full output:
+  `/tmp/proof-pact-polish-2-claims.log`.
+- `npm run verify:live`: PASS against the cold live URL. It covers first-screen
+  copy, demo isolation/reset/reload/export, stale recovery, 16 fresh-connection
+  reads, partner sync, next-week prefill, all-route titles/canonicals/social
+  metadata/404s, history focus/announcement/scroll, 44 px targets, axe,
+  same-origin traffic, email rejection, offline reload, and console errors.
+- `/opt/fleet/lib/verify-url.sh`: PASS. Evidence:
+  `/tmp/proof-pact-polish-2-verify/verify.json` and its desktop/mobile images.
+- Lighthouse 12.8.2 mobile: performance 100, accessibility 100, LCP 1.3 s,
+  CLS 0, TBT 20 ms. Desktop: performance 100, accessibility 100, LCP 0.4 s,
+  CLS 0, TBT 0 ms.
+- ACR build `chm0`: PASS. `/health` returns build SHA
+  `067068962eebc04a59039daa0bc19e9315e5b748`.
+- Azure deployment: min replicas 1, max replicas 1. Eight reads before and
+  eight reads after a cross-connection save all
+  retained the demo; cross-connection export retained the new proof state.
+- Live screenshots: `/tmp/proof-pact-polish-2-live/landing-mobile.png`,
+  `/tmp/proof-pact-polish-2-live/landing-desktop.png`, and
+  `/tmp/proof-pact-polish-2-live/demo-mobile.png`.
+
+## Run locally
 
 ```sh
 npm ci
 npm test
 ```
 
-Run any individual claim with its exact command from `.factory/claims.json`,
-for example `npm test -- --grep @claim:demo-sandbox`.
+Run the deployed release gate with:
 
-## Known gaps and next steps
+```sh
+npm run verify:live
+```
 
-See `.factory/review-2.md` for exact evidence and fixes. In priority order:
+## Known gaps
 
-1. Move live pact state to a datastore shared by every replica, then gate the
-   deployment with a fresh-connection create/read/save/export test.
-2. Clear or replace stale demo IDs on 404/410 and keep a working Reset demo
-   action in the error state.
-3. Finish the 44 px target repair on Privacy and Terms.
-4. Strengthen the Markdown claim test and add claim coverage for partner note
-   sharing and the privacy data inventory.
-5. Replace the subjective phrase “clear explanations.”
-
-No AI feature is recommended. Export, partner sync, and recurring pacts are
-the correct leverage points; the existing sync must become reliable first.
+None for this work order. Keep the production replica maximum at one while the
+service uses local SQLite.
