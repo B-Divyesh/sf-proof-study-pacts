@@ -55,5 +55,5 @@ This states the job, audience, change, and first action in one breath.
 | other learner | partner |
 | saved credential | private access link |
 
-Catalog description (100 characters): “Work through a Lean proof with a partner,
-compare both attempts, and export the session as Markdown.”
+Catalog description (83 characters): “Work through a Lean proof with a partner
+and export both attempts as a Markdown note.”

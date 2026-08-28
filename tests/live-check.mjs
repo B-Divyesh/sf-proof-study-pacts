@@ -41,6 +41,23 @@ for (const text of ['Try it with sample data', 'Free to use', 'Partner-visible n
 }
 await page.screenshot({ path: `${evidenceDir}/landing-mobile.png`, fullPage: true });
 
+const selectableExercises = await page.locator('#exercise-select option').evaluateAll(options => options.map((option, index) => ({
+  index,
+  title: option.textContent?.trim() || ''
+})));
+check(selectableExercises.length > 0, 'the pact form has no selectable public exercises');
+const publicSources = await request.newContext({ timeout: 20_000 });
+try {
+  for (const exercise of selectableExercises) {
+    await page.locator('#exercise-select').selectOption(String(exercise.index));
+    const url = await page.locator('#exercise-url').inputValue();
+    const response = await publicSources.get(url, { failOnStatusCode: false, maxRedirects: 5 });
+    check(response.status() >= 200 && response.status() < 400, `${exercise.title} source returned ${response.status()}: ${url}`);
+  }
+} finally {
+  await publicSources.dispose();
+}
+
 await page.goto(`${baseURL}/?demo=1`, { waitUntil: 'networkidle' });
 check(new URL(page.url()).pathname === '/demo', '?demo=1 did not enter /demo');
 await page.getByText('Mira’s attempt').waitFor();

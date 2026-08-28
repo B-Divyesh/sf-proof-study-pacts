@@ -1,4 +1,5 @@
 import './styles.css';
+import { publicExercises } from './exercises';
 
 type Member = { name: string; role: string; joined: boolean };
 type Snapshot = { label: string; proofState: string };
@@ -20,23 +21,7 @@ const app = document.querySelector<HTMLDivElement>('#app')!;
 const routeStatus = document.querySelector<HTMLDivElement>('#route-status')!;
 const baseUrl = 'https://proof-study-pacts.sociobot.in';
 
-const exercises = [
-  {
-    title: 'Natural Number Game — Add zero',
-    url: 'https://adam.math.hhu.de/#/g/leanprover-community/nng4/world/Tutorial/level/4',
-    theorem: 'theorem add_zero (n : ℕ) : n + 0 = n := by'
-  },
-  {
-    title: 'Theorem Proving in Lean — Rewriting',
-    url: 'https://leanprover.github.io/theorem_proving_in_lean4/tactics.html',
-    theorem: 'example (a b c : Nat) (h₁ : a = b) (h₂ : b = c) : a = c := by'
-  },
-  {
-    title: 'Mathematics in Lean — Sets and Functions',
-    url: 'https://leanprover-community.github.io/mathematics_in_lean/C04_Sets_and_Functions.html',
-    theorem: 'example (f : α → β) (s t : Set α) : f \` (s ∩ t) ⊆ f \` s ∩ f \` t := by'
-  }
-];
+const exercises = publicExercises;
 
 function esc(value: unknown): string {
   return String(value ?? '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]!);
