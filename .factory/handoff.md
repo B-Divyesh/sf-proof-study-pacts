@@ -36,6 +36,9 @@ field are rejected.
 - Lighthouse 12.8.2 mobile: performance 100, accessibility 100, LCP 1.3 s,
   CLS 0, TBT 20 ms. Desktop: performance 100, accessibility 100, LCP 0.4 s,
   CLS 0, TBT 0 ms.
+- Live load smoke: 100 concurrent `/health` requests completed in 334 ms
+  (300 requests/second), all with HTTP 200. Evidence:
+  `/tmp/proof-pact-polish-2-load.json`.
 - Final ACR build `chm5`: PASS. `/health` returns build SHA
   `b37ebdb8a24933e24750295c3c2e01b853c911c2`.
 - Azure revision `sf-proof-study-pacts--0000006`: min replicas 1, max replicas

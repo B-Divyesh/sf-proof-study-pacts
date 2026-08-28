@@ -55,5 +55,8 @@ Live URL: `https://proof-study-pacts.sociobot.in`.
   and `/tmp/proof-pact-polish-2-lighthouse.json`.
 - Initial production JavaScript is 27.29 kB raw / 8.94 kB gzip. CSS is
   16.88 kB raw / 4.61 kB gzip.
+- Live load smoke: 100 concurrent `/health` requests, 334 ms total (300
+  requests/second), all HTTP 200. Evidence:
+  `/tmp/proof-pact-polish-2-load.json`.
 
 No review finding remains open.
