@@ -1,0 +1,30 @@
+{
+  "slug": "proof-study-pacts",
+  "title": "Proof Pact",
+  "summary": "Work through one Lean proof with a partner, record both attempts, and export the session.",
+  "territory": "utilities",
+  "user": "Independent Lean 4 learners who need a structured, accountable way to work through proof exercises with another person instead of collecting disconnected tutorials.",
+  "evidence": [
+    {
+      "url": "https://hn.algolia.com/api/v1/items/45925656",
+      "date": "2025-11-14",
+      "quote_or_summary": "An Ask HN requester says it is difficult to find a structured instructor-led Lean 4 course or organized study group, as opposed to documentation and tutorials."
+    },
+    {
+      "url": "https://dev.to/muzammil-13/proof-or-bluff-why-todays-ai-still-fails-the-math-olympiad-test-4pom",
+      "date": "2025-05-03",
+      "quote_or_summary": "The article distinguishes final answers from rigorous proofs and reports that difficult proof reasoning remains a meaningful gap for current AI."
+    }
+  ],
+  "recurrence": "A direct 2025 request for study structure and a separate proof-focused discussion show that proof explanation—not just final output—remains valuable.",
+  "current_workaround": "Work through Mathlib docs alone, join a large Discord, or use an LLM to suggest proof steps without a stable peer routine.",
+  "incumbents_and_gap": "Lean's documentation, Zulip, and natural-number-game offer resources; they do not provide a tiny recurring pair protocol that commits both learners to a theorem, a failed attempt, and an explanation.",
+  "smallest_useful_product": "Web app creates a two-person weekly pact from public Lean exercises, assigns complementary roles, records proof-state snapshots, and exports a Markdown session note.",
+  "success_measure": "At least 30% of matched pairs complete three weekly sessions and each submits two independently explained proof attempts in a month.",
+  "artifact_class": "web-with-backend",
+  "monetization": "free",
+  "constraints": "Use only openly licensed/public exercise links; obtain consent for partner-visible notes; no claims that a proof is pedagogically correct beyond Lean's checker.",
+  "why_distinct": "It organizes deliberate peer proof work rather than creating another tutorial catalogue or theorem-proving chatbot.",
+  "confidence": 3,
+  "state": "RESEARCHED"
+}

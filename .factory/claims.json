@@ -1,0 +1,51 @@
+[
+  {
+    "id": "free-access",
+    "claim": "Proof Pact is free to use and the demo opens without an account or payment step.",
+    "where": "landing facts, README",
+    "test": "npm test -- --grep @claim:free-access",
+    "sandbox": "fresh browser context; open the landing page and demo without credentials or a payment request"
+  },
+  {
+    "id": "demo-sandbox",
+    "claim": "The demo uses sample data in a separate session workspace.",
+    "where": "landing action, demo banner, README",
+    "test": "npm test -- --grep @claim:demo-sandbox",
+    "sandbox": "fresh browser context at /demo; assert sample records, demo ID, sessionStorage key, and empty localStorage"
+  },
+  {
+    "id": "markdown-export",
+    "claim": "Exports the theorem, both roles, attempts, explanations, and proof states as Markdown.",
+    "where": "workspace export panel, README",
+    "test": "npm test -- --grep @claim:markdown-export",
+    "sandbox": "fresh /demo workspace; download the file and assert its content"
+  },
+  {
+    "id": "same-origin-privacy",
+    "claim": "The app loads no third-party analytics, fonts, or scripts.",
+    "where": "privacy page, README",
+    "test": "npm test -- --grep @claim:same-origin-privacy",
+    "sandbox": "fresh /demo browser context; capture the complete request log while saving an attempt"
+  },
+  {
+    "id": "demo-expiry",
+    "claim": "Demo workspaces expire within 24 hours.",
+    "where": "privacy page, demo documentation",
+    "test": "npm test -- --grep @claim:demo-expiry",
+    "sandbox": "fresh demo API response; compare expiresAt with the request time"
+  },
+  {
+    "id": "private-notes",
+    "claim": "Pact notes require a private member access key.",
+    "where": "workspace, privacy page, README",
+    "test": "npm test -- --grep @claim:private-notes",
+    "sandbox": "fresh /demo workspace; request pact notes with a wrong key and assert HTTP 403"
+  },
+  {
+    "id": "paired-roles",
+    "claim": "Creating a pact assigns Prover and Explainer roles after each partner consents.",
+    "where": "landing, invite screen, workspace, README",
+    "test": "npm test -- --grep @claim:paired-roles",
+    "sandbox": "two clean browser contexts; create, invite, consent, join, and assert both roles"
+  }
+]
