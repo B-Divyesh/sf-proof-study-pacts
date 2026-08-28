@@ -9,6 +9,13 @@ type Pact = {
 };
 type SessionResponse = { pact: Pact; memberToken: string };
 
+class ApiRequestError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+    this.name = 'ApiRequestError';
+  }
+}
+
 const app = document.querySelector<HTMLDivElement>('#app')!;
 const routeStatus = document.querySelector<HTMLDivElement>('#route-status')!;
 const baseUrl = 'https://proof-study-pacts.sociobot.in';
@@ -81,7 +88,7 @@ async function api<T>(path: string, options: RequestInit = {}, token?: string): 
   catch { throw new Error('The server could not be reached. Check your connection and try again.'); }
   if (!response.ok) {
     const body = await response.json().catch(() => ({ error: 'The server returned an unreadable error. Try again.' }));
-    throw new Error(body.error || 'The request failed. Try again.');
+    throw new ApiRequestError(body.error || 'The request failed. Try again.', response.status);
   }
   const type = response.headers.get('content-type') || '';
   return (type.includes('json') ? response.json() : response.text()) as Promise<T>;
@@ -100,7 +107,7 @@ function landing(restoreScroll = 0): void {
         <div class="hero-copy">
           <p class="eyebrow"><span class="lamp" aria-hidden="true"></span>Weekly Lean routine</p>
           <h1 id="page-title" tabindex="-1">Work one Lean proof with a partner</h1>
-          <p class="lede">For independent Lean learners who need a weekly routine for attempts, proof states, and clear explanations.</p>
+          <p class="lede">For independent Lean learners who need a weekly routine for attempts, proof states, and explanations in their own words.</p>
           <div class="hero-actions"><a class="button primary" href="/demo" data-link>Try it with sample data</a><span>A ready pact opens in one click.</span></div>
           <ul class="plain-facts" aria-label="Product facts"><li>Free to use</li><li>Partner-visible notes need consent</li><li>Records work; run Lean to check it</li></ul>
         </div>
@@ -184,15 +191,26 @@ async function demoPage(reset = false): Promise<void> {
     const saved = !reset ? sessionStorage.getItem('demo:pact') : null;
     let session: SessionResponse;
     if (saved) {
-      const { id, token } = JSON.parse(saved) as { id: string; token: string };
-      const pact = await api<Pact>(`/api/pacts/${id}`, {}, token);
-      session = { pact, memberToken: token };
+      try {
+        const { id, token } = JSON.parse(saved) as { id: string; token: string };
+        const pact = await api<Pact>(`/api/pacts/${id}`, {}, token);
+        session = { pact, memberToken: token };
+      } catch (reason) {
+        if (!(reason instanceof ApiRequestError) || ![404, 410].includes(reason.status)) throw reason;
+        sessionStorage.removeItem('demo:pact');
+        session = await createDemoSession();
+      }
     } else {
-      session = await api<SessionResponse>('/api/demo', { method: 'POST' });
-      sessionStorage.setItem('demo:pact', JSON.stringify({ id: session.pact.id, token: session.memberToken }));
+      session = await createDemoSession();
     }
     renderWorkspace(session.pact, session.memberToken, true);
   } catch (reason) { renderError('The sample pact did not load', (reason as Error).message, '/demo', 'Try the sample again'); }
+}
+
+async function createDemoSession(): Promise<SessionResponse> {
+  const session = await api<SessionResponse>('/api/demo', { method: 'POST' });
+  sessionStorage.setItem('demo:pact', JSON.stringify({ id: session.pact.id, token: session.memberToken }));
+  return session;
 }
 
 async function pactPage(id: string): Promise<void> {
@@ -308,7 +326,7 @@ async function copyText(text: string, message: string): Promise<void> {
 
 function privacy(): void {
   setMeta('Privacy — Proof Pact', 'How Proof Pact stores pact notes and access links.', '/privacy');
-  app.innerHTML = shell(`<main id="main" class="policy-page"><p class="eyebrow">Plain policy</p><h1 tabindex="-1">Privacy for pact partners</h1><p class="policy-date">Effective 28 August 2026</p><section><h2>What the service stores</h2><p>Proof Pact stores names, exercise details, proof attempts, explanations, proof states, consent, and session dates. It does not ask for email addresses.</p></section><section><h2>Who can read a pact</h2><p>Each partner gets a private access link. Anyone with that link can read and change the pact. Keep it private.</p></section><section><h2>Demo data</h2><p>Demo pacts use a separate server workspace. They expire within 24 hours. The browser keeps the demo key in session storage.</p></section><section><h2>Network and tracking</h2><p>The app sends pact changes to this service. It does not load third-party analytics, fonts, or scripts.</p></section><section><h2>Removal</h2><p>Contact <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a> with the pact ID to request removal.</p></section></main>`);
+  app.innerHTML = shell(`<main id="main" class="policy-page"><p class="eyebrow">Plain policy</p><h1 tabindex="-1">Privacy for pact partners</h1><p class="policy-date">Effective 28 August 2026</p><section><h2>What the service stores</h2><p>Proof Pact stores names, exercise details, roles, attempts, explanations, proof states, consent, session dates, status, and pact IDs.</p><p>It also stores record IDs, ordering, timestamps, and one-way access-key hashes.</p><p>It does not ask for or store email addresses.</p></section><section><h2>Who can read a pact</h2><p>Each partner gets a private access link. Anyone with that link can read and change the pact. Keep it private.</p></section><section><h2>Demo data</h2><p>Demo pacts use a separate server workspace. They expire within 24 hours. The browser keeps the demo key in session storage.</p></section><section><h2>Network and tracking</h2><p>The app sends pact changes to this service. It does not load third-party analytics, fonts, or scripts.</p></section><section><h2>Removal</h2><p>Contact <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a> with the pact ID to request removal.</p></section></main>`);
   bindNavigation(); focusHeading();
 }
 

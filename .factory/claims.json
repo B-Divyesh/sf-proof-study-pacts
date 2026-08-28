@@ -61,5 +61,26 @@
     "where": "landing limits, terms, README",
     "test": "npm test -- --grep @claim:records-without-checking",
     "sandbox": "fresh demo; save deliberately invalid Lean text and assert it appears as recorded work with no correctness result or non-product request"
+  },
+  {
+    "id": "partner-note-sharing",
+    "claim": "Both partners can read saved notes, including the author, attempt, explanation, and proof state.",
+    "where": "workspace, privacy page, README",
+    "test": "npm test -- --grep @claim:partner-note-sharing",
+    "sandbox": "two clean browser contexts; one partner saves unique work, then the other reloads and reads every saved field with the correct author"
+  },
+  {
+    "id": "stored-data-inventory",
+    "claim": "Proof Pact stores the fields listed on the Privacy page and does not ask for or store email addresses.",
+    "where": "privacy page",
+    "test": "npm test -- --grep @claim:stored-data-inventory",
+    "sandbox": "fresh pact; reject an undeclared email field, inspect the returned record, and run the backend's exact schema inventory test"
+  },
+  {
+    "id": "offline-shell",
+    "claim": "Saved pages remain visible offline, but pact changes need a connection.",
+    "where": "offline banner",
+    "test": "npm test -- --grep @claim:offline-shell",
+    "sandbox": "fresh browser context; install the service worker, go offline, load a saved policy route, and assert its content and offline status"
   }
 ]

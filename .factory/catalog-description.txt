@@ -1,1 +1,1 @@
-Work through one Lean proof with a partner, record both attempts, and export a Markdown note.
+Work through a Lean proof with a partner, compare both attempts, and export the session as Markdown.

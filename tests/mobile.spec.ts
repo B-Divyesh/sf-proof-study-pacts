@@ -20,15 +20,17 @@ test('keyboard reaches the first primary action', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Try it with sample data' })).toBeFocused();
 });
 
-test('primary links and controls meet the 44px touch target baseline', async ({ page }) => {
-  await page.goto('/');
-  for (const locator of [page.getByRole('link', { name: 'Proof Pact home' }), page.getByRole('link', { name: 'Demo' }), page.getByRole('link', { name: 'Make a pact' }), page.getByLabel('Main navigation').getByRole('link', { name: 'Privacy' }), page.getByLabel('Footer navigation').getByRole('link', { name: 'Privacy' })]) {
-    const box = await locator.boundingBox();
-    expect(box?.width).toBeGreaterThanOrEqual(44);
-    expect(box?.height).toBeGreaterThanOrEqual(44);
+test('every visible interactive target is at least 44px on every public route', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const route of ['/', '/demo', '/privacy', '/terms', '/missing-page']) {
+    await page.goto(route);
+    await expect(page.locator('main h1')).toBeVisible();
+    const undersized = await page.locator('a, button, input, textarea, select, summary').evaluateAll(elements => elements.flatMap(element => {
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      if (style.display === 'none' || style.visibility === 'hidden' || rect.width === 0 || rect.height === 0) return [];
+      return rect.width < 44 || rect.height < 44 ? [{ route: location.pathname, element: element.outerHTML.slice(0, 180), width: rect.width, height: rect.height }] : [];
+    }));
+    expect(undersized).toEqual([]);
   }
-  await page.goto('/demo');
-  const exercise = page.getByRole('link', { name: /Open the public exercise/ });
-  const box = await exercise.boundingBox();
-  expect(box?.height).toBeGreaterThanOrEqual(44);
 });

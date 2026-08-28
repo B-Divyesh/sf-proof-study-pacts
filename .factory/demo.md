@@ -10,5 +10,7 @@
   `demo:pact`. Demo mode does not read or write real pact browser keys.
 - Reset: select **Reset demo** in the persistent banner. This forgets the
   current demo key and provisions a newly seeded workspace.
+- Recovery: a missing or expired demo key is discarded automatically. The app
+  creates a new seeded workspace while keeping the demo banner visible.
 - Leave: select **Start for real**. This removes the demo session key and opens
   the real pact form.

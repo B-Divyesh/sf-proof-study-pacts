@@ -1,5 +1,7 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, request, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+
+type CreatedSession = { pact: { id: string }; memberToken: string };
 
 async function openDemo(page: Page) {
   await page.goto('/demo');
@@ -27,9 +29,30 @@ test('@claim:demo-sandbox sample data opens in an isolated session workspace', a
   expect(session.token.length).toBeGreaterThan(30);
   expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
   expect(await page.evaluate(() => Object.keys(sessionStorage))).toEqual(['demo:pact']);
+
+  await page.evaluate(() => localStorage.setItem('real-data-sentinel', 'unchanged'));
+  await page.getByLabel('Lean proof attempt').fill('by\n  exact Nat.add_zero 7');
+  await page.getByLabel('Explanation in your own words').fill('The existing theorem matches this goal without another lemma.');
+  await page.getByLabel('Proof state').fill('⊢ 7 + 0 = 7');
+  await page.getByRole('button', { name: 'Save proof attempt' }).click();
+  await expect(page.getByText('3 attempts')).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('exact Nat.add_zero 7')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Reset demo' }).click();
+  await expect(page.getByText('2 attempts')).toBeVisible();
+  const resetSession = JSON.parse(await page.evaluate(() => sessionStorage.getItem('demo:pact') || '{}')) as { id: string };
+  expect(resetSession.id).not.toBe(session.id);
+  expect(await page.evaluate(() => localStorage.getItem('real-data-sentinel'))).toBe('unchanged');
+
+  await page.getByRole('button', { name: 'Start for real' }).click();
+  await expect(page).toHaveURL(/\/#make$/);
+  await expect(page.getByText('Demo — sample data, nothing is saved')).toHaveCount(0);
+  expect(await page.evaluate(() => sessionStorage.getItem('demo:pact'))).toBeNull();
+  expect(await page.evaluate(() => localStorage.getItem('real-data-sentinel'))).toBe('unchanged');
 });
 
-test('@claim:markdown-export exports the theorem, both roles, and proof states', async ({ page }) => {
+test('@claim:markdown-export exports the theorem, both roles, attempts, explanations, and every proof state', async ({ page }) => {
   await openDemo(page);
   const downloadEvent = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export Markdown note' }).click();
@@ -40,8 +63,16 @@ test('@claim:markdown-export exports the theorem, both roles, and proof states',
   expect(text).toContain('# Proof Pact — Natural Number Game — Add zero');
   expect(text).toContain('Mira — Prover');
   expect(text).toContain('Theo — Explainer');
-  expect(text).toContain('Proof-state snapshots');
+  expect(text.match(/^## .+ — (Prover|Explainer)$/gm)).toHaveLength(2);
+  expect(text).toContain('induction n with');
+  expect(text).toContain('simpa using Nat.add_zero n');
+  expect(text).toContain('I tried induction first. The goal closed, but this proof uses more machinery than the theorem needs.');
+  expect(text).toContain('The library theorem states this equality directly. The simpa step matches its conclusion to our goal.');
+  expect(text.match(/### Proof-state snapshots/g)).toHaveLength(1);
   expect(text).toContain('Before simp');
+  expect(text).toContain('n : ℕ\n⊢ n + 0 = n');
+  expect(text).toContain('After induction');
+  expect(text).toContain('case succ n ih\n⊢ n + 1 = Nat.succ n');
 });
 
 test('@claim:same-origin-privacy demo work makes no third-party requests', async ({ page }) => {
@@ -128,13 +159,129 @@ test('@claim:paired-roles creation and consent assign complementary roles', asyn
   await creatorContext.close(); await partnerContext.close();
 });
 
-test('landing and demo have no serious accessibility violations', async ({ page }) => {
+test('@claim:partner-note-sharing one partner saves an attributed note that the other partner can read', async ({ browser }) => {
+  const creatorContext = await browser.newContext();
+  const creator = await creatorContext.newPage();
+  await creator.goto('/');
+  await creator.getByLabel('Your name').fill('Ada');
+  await creator.getByLabel('Partner name').fill('Emmy');
+  await creator.getByLabel(/I agree that my partner/).check();
+  await creator.getByRole('button', { name: 'Create pact and invite' }).click();
+  const invite = await creator.getByLabel('Partner invite link').inputValue();
+
+  const partnerContext = await browser.newContext();
+  const partner = await partnerContext.newPage();
+  await partner.goto(invite);
+  await partner.getByLabel(/I agree that my partner/).check();
+  await partner.getByRole('button', { name: 'Join pact as Explainer' }).click();
+  const proof = 'by\n  exact Nat.add_zero 37';
+  const explanation = 'The add-zero theorem gives the exact equality for thirty-seven.';
+  const proofState = '⊢ 37 + 0 = 37';
+  await partner.getByLabel('Lean proof attempt').fill(proof);
+  await partner.getByLabel('Explanation in your own words').fill(explanation);
+  await partner.getByLabel('Proof state').fill(proofState);
+  await partner.getByRole('button', { name: 'Save proof attempt' }).click();
+  await expect(partner.getByText('1 attempt')).toBeVisible();
+
+  await creator.reload();
+  const sharedAttempt = creator.locator('article.attempt').filter({ hasText: 'Nat.add_zero 37' });
+  await expect(sharedAttempt).toContainText('Emmy’s attempt');
+  await expect(sharedAttempt).toContainText(explanation);
+  await sharedAttempt.getByText('1 proof-state snapshot').click();
+  await expect(sharedAttempt.getByText(proofState)).toBeVisible();
+  await creatorContext.close();
+  await partnerContext.close();
+});
+
+test('@claim:stored-data-inventory pact records match the disclosed fields and reject email input', async ({ page }) => {
+  await page.goto('/privacy');
+  await expect(page.getByText('It does not ask for or store email addresses.')).toBeVisible();
   await page.goto('/');
-  const landing = await new AxeBuilder({ page }).analyze();
-  expect(landing.violations.filter(v => ['serious', 'critical'].includes(v.impact || ''))).toEqual([]);
-  await openDemo(page);
-  const demo = await new AxeBuilder({ page }).analyze();
-  expect(demo.violations.filter(v => ['serious', 'critical'].includes(v.impact || ''))).toEqual([]);
+  expect(await page.locator('form input[type="email"]').count()).toBe(0);
+  const payload = {
+    creatorName: 'Ada', partnerName: 'Emmy', exerciseTitle: 'Natural Number Game — Add zero',
+    exerciseUrl: 'https://adam.math.hhu.de/#/g/leanprover-community/nng4/world/Tutorial/level/4',
+    theorem: 'theorem add_zero (n : ℕ) : n + 0 = n := by', weekOf: '2026-08-24', consent: true
+  };
+  const rejected = await page.request.post('/api/pacts', { data: { ...payload, email: 'ada@example.test' } });
+  expect(rejected.status()).toBe(422);
+  const created = await page.request.post('/api/pacts', { data: payload });
+  expect(created.ok()).toBeTruthy();
+  const session = await created.json();
+  const read = await page.request.get(`/api/pacts/${session.pact.id}`, { headers: { Authorization: `Bearer ${session.memberToken}` } });
+  expect(read.ok()).toBeTruthy();
+  expect(JSON.stringify(await read.json()).toLowerCase()).not.toContain('email');
+});
+
+test('@claim:offline-shell saved pages remain readable offline', async ({ page, context }) => {
+  await page.goto('/');
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBeTruthy();
+  await context.setOffline(true);
+  await page.goto('/privacy', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Privacy for pact partners');
+  await expect(page.getByText('You are offline. Saved pages remain visible, but pact changes need a connection.')).toBeVisible();
+  await context.setOffline(false);
+});
+
+test('fresh HTTP connections preserve demo create, read, save, reload, and export', async () => {
+  const baseURL = 'http://127.0.0.1:4173';
+  const createClient = await request.newContext({ baseURL });
+  const createdResponse = await createClient.post('/api/demo');
+  expect(createdResponse.ok()).toBeTruthy();
+  const created = await createdResponse.json() as CreatedSession;
+  await createClient.dispose();
+
+  const readClient = await request.newContext({ baseURL });
+  expect((await readClient.get(`/api/pacts/${created.pact.id}`, { headers: { Authorization: `Bearer ${created.memberToken}` } })).ok()).toBeTruthy();
+  await readClient.dispose();
+
+  const saveClient = await request.newContext({ baseURL });
+  const saved = await saveClient.post(`/api/pacts/${created.pact.id}/attempts`, {
+    headers: { Authorization: `Bearer ${created.memberToken}` },
+    data: { proofText: 'by\n  exact Nat.add_zero 11', explanation: 'The library statement closes this exact goal.', snapshots: [{ label: 'Fresh connection', proofState: '⊢ 11 + 0 = 11' }] }
+  });
+  expect(saved.ok()).toBeTruthy();
+  await saveClient.dispose();
+
+  const reloadClient = await request.newContext({ baseURL });
+  const reloaded = await reloadClient.get(`/api/pacts/${created.pact.id}`, { headers: { Authorization: `Bearer ${created.memberToken}` } });
+  expect(JSON.stringify(await reloaded.json())).toContain('Fresh connection');
+  await reloadClient.dispose();
+
+  const exportClient = await request.newContext({ baseURL });
+  const exported = await exportClient.post(`/api/pacts/${created.pact.id}/export`, { headers: { Authorization: `Bearer ${created.memberToken}` } });
+  expect(exported.ok()).toBeTruthy();
+  expect(await exported.text()).toContain('Fresh connection');
+  await exportClient.dispose();
+});
+
+for (const status of [404, 410]) {
+  test(`a saved demo returning ${status} is replaced automatically`, async ({ browser }) => {
+    const context = await browser.newContext();
+    await context.addInitScript(({ staleStatus }) => {
+      sessionStorage.setItem('demo:pact', JSON.stringify({ id: `demo-stale-${staleStatus}`, token: 'stale-token' }));
+    }, { staleStatus: status });
+    const page = await context.newPage();
+    await page.route(`**/api/pacts/demo-stale-${status}`, route => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify({ error: status === 410 ? 'This demo pact expired.' : 'This demo pact was not found.' }) }));
+    await page.goto('/demo');
+    await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
+    await expect(page.getByText('Mira’s attempt')).toBeVisible();
+    const replacement = JSON.parse(await page.evaluate(() => sessionStorage.getItem('demo:pact') || '{}')) as { id: string };
+    expect(replacement.id).toMatch(/^demo-/);
+    expect(replacement.id).not.toBe(`demo-stale-${status}`);
+    await context.close();
+  });
+}
+
+test('every public route has no serious or critical accessibility violations', async ({ page }) => {
+  for (const route of ['/', '/demo', '/privacy', '/terms', '/missing-page']) {
+    await page.goto(route);
+    await expect(page.locator('main h1')).toBeVisible();
+    const result = await new AxeBuilder({ page }).analyze();
+    expect(result.violations.filter(v => ['serious', 'critical'].includes(v.impact || '')), route).toEqual([]);
+  }
 });
 
 test('routes have titles, one h1, working deep links, and no console errors', async ({ page }) => {

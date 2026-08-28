@@ -20,6 +20,7 @@ workspaces expire within 24 hours.
 4. The pair exports the theorem, roles, attempts, explanations, and proof states
    as Markdown.
 
+Both partners can read each saved note and its author.
 Only a private access link opens pact notes. The app loads no third-party
 analytics, fonts, or scripts. See [Privacy](https://proof-study-pacts.sociobot.in/privacy)
 and [Terms](https://proof-study-pacts.sociobot.in/terms).

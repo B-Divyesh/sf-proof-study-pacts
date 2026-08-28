@@ -1,13 +1,13 @@
 # Landing copy audit
 
-Audited 2026-08-28 after polish round 1. Counts treat hyphenated terms as one
+Audited 2026-08-28 after polish round 2. Counts treat hyphenated terms as one
 word. No sentence is over 22 words. No banned word appears in visitor-facing
 landing copy.
 
 | Words | Sentence |
 | ---: | --- |
 | 7 | Work one Lean proof with a partner. |
-| 16 | For independent Lean learners who need a weekly routine for attempts, proof states, and clear explanations. |
+| 19 | For independent Lean learners who need a weekly routine for attempts, proof states, and explanations in their own words. |
 | 7 | A ready pact opens in one click. |
 | 3 | Free to use. |
 | 5 | Partner-visible notes need consent. |
@@ -30,12 +30,14 @@ landing copy.
 | 4 | Proof Pact records your work. |
 | 6 | Run Lean to check it. |
 | 8 | Partners decide whether an explanation makes sense. |
+| 11 | You are offline. Saved pages remain visible, but pact changes need a connection. |
+| 5 | Return to a saved pact. |
 
 ## First-screen read-aloud
 
 “Work one Lean proof with a partner. For independent Lean learners who need a
-weekly routine for attempts, proof states, and clear explanations. Try it with
-sample data; a ready pact opens in one click.”
+weekly routine for attempts, proof states, and explanations in their own words.
+Try it with sample data; a ready pact opens in one click.”
 
 This states the job, audience, change, and first action in one breath.
 
@@ -53,5 +55,5 @@ This states the job, audience, change, and first action in one breath.
 | other learner | partner |
 | saved credential | private access link |
 
-Catalog description (91 characters): “Work through one Lean proof with a
-partner, record both attempts, and export a Markdown note.”
+Catalog description (100 characters): “Work through a Lean proof with a partner,
+compare both attempts, and export the session as Markdown.”

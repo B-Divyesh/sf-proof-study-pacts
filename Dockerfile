@@ -5,7 +5,7 @@ RUN npm ci --no-audit --no-fund
 COPY frontend ./frontend
 RUN npm run build
 
-FROM rust:1.88-bookworm AS backend
+FROM rust:1-bookworm AS backend
 WORKDIR /build
 ARG BUILD_SHA=dev
 ENV BUILD_SHA=${BUILD_SHA}

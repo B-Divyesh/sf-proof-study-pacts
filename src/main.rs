@@ -52,6 +52,7 @@ fn error(status: StatusCode, message: impl Into<String>) -> Response {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 #[serde(rename_all = "camelCase")]
 struct CreatePact {
     creator_name: String,
@@ -64,6 +65,7 @@ struct CreatePact {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 #[serde(rename_all = "camelCase")]
 struct JoinPact {
     partner_name: String,
@@ -71,6 +73,7 @@ struct JoinPact {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 #[serde(rename_all = "camelCase")]
 struct SaveAttempt {
     proof_text: String,
@@ -79,6 +82,7 @@ struct SaveAttempt {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 #[serde(rename_all = "camelCase")]
 struct SnapshotInput {
     label: String,
@@ -222,12 +226,40 @@ async fn main() {
         .route("/api/pacts/{id}/attempts", post(save_attempt))
         .route("/api/pacts/{id}/complete", post(complete_pact))
         .route("/api/pacts/{id}/export", post(export_pact))
-        .nest_service("/assets", ServeDir::new(PathBuf::from(&static_dir).join("assets")))
-        .route("/favicon.svg", get(|State(state): State<AppState>| async move { named_static(&state, "favicon.svg", "image/svg+xml").await }))
-        .route("/apple-touch-icon.png", get(|State(state): State<AppState>| async move { named_static(&state, "apple-touch-icon.png", "image/png").await }))
-        .route("/robots.txt", get(|State(state): State<AppState>| async move { named_static(&state, "robots.txt", "text/plain; charset=utf-8").await }))
-        .route("/sitemap.xml", get(|State(state): State<AppState>| async move { named_static(&state, "sitemap.xml", "application/xml; charset=utf-8").await }))
-        .route("/sw.js", get(|State(state): State<AppState>| async move { named_static(&state, "sw.js", "application/javascript; charset=utf-8").await }))
+        .nest_service(
+            "/assets",
+            ServeDir::new(PathBuf::from(&static_dir).join("assets")),
+        )
+        .route(
+            "/favicon.svg",
+            get(|State(state): State<AppState>| async move {
+                named_static(&state, "favicon.svg", "image/svg+xml").await
+            }),
+        )
+        .route(
+            "/apple-touch-icon.png",
+            get(|State(state): State<AppState>| async move {
+                named_static(&state, "apple-touch-icon.png", "image/png").await
+            }),
+        )
+        .route(
+            "/robots.txt",
+            get(|State(state): State<AppState>| async move {
+                named_static(&state, "robots.txt", "text/plain; charset=utf-8").await
+            }),
+        )
+        .route(
+            "/sitemap.xml",
+            get(|State(state): State<AppState>| async move {
+                named_static(&state, "sitemap.xml", "application/xml; charset=utf-8").await
+            }),
+        )
+        .route(
+            "/sw.js",
+            get(|State(state): State<AppState>| async move {
+                named_static(&state, "sw.js", "application/javascript; charset=utf-8").await
+            }),
+        )
         .fallback(not_found_shell)
         .layer(middleware::from_fn(security_headers))
         .layer(middleware::from_fn_with_state(state.clone(), rate_limit))
@@ -308,11 +340,17 @@ async fn static_shell(state: &AppState, status: StatusCode) -> Response {
     match tokio::fs::read(state.static_dir.join("index.html")).await {
         Ok(html) => (
             status,
-            [(header::CONTENT_TYPE, HeaderValue::from_static("text/html; charset=utf-8"))],
+            [(
+                header::CONTENT_TYPE,
+                HeaderValue::from_static("text/html; charset=utf-8"),
+            )],
             html,
         )
             .into_response(),
-        Err(_) => error(StatusCode::SERVICE_UNAVAILABLE, "The application shell is unavailable. Try again."),
+        Err(_) => error(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "The application shell is unavailable. Try again.",
+        ),
     }
 }
 
@@ -322,7 +360,8 @@ async fn named_static(state: &AppState, name: &str, content_type: &'static str) 
             StatusCode::OK,
             [(header::CONTENT_TYPE, HeaderValue::from_static(content_type))],
             file,
-        ).into_response(),
+        )
+            .into_response(),
         Err(_) => error(StatusCode::NOT_FOUND, "This file was not found."),
     }
 }
@@ -1015,6 +1054,81 @@ async fn shutdown_signal() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn stored_data_schema_matches_privacy_inventory() {
+        let database = tempfile::NamedTempFile::new().expect("temporary database");
+        let options =
+            SqliteConnectOptions::from_str(&format!("sqlite://{}", database.path().display()))
+                .expect("database path")
+                .create_if_missing(true)
+                .foreign_keys(true);
+        let pool = SqlitePool::connect_with(options)
+            .await
+            .expect("open database");
+        migrate(&pool).await.expect("migrate database");
+
+        for (table, expected) in [
+            (
+                "pacts",
+                vec![
+                    "id",
+                    "exercise_title",
+                    "exercise_url",
+                    "theorem",
+                    "week_of",
+                    "creator_name",
+                    "partner_name",
+                    "status",
+                    "demo",
+                    "created_at",
+                    "expires_at",
+                ],
+            ),
+            (
+                "members",
+                vec![
+                    "id",
+                    "pact_id",
+                    "name",
+                    "role",
+                    "consent",
+                    "token_hash",
+                    "joined_at",
+                ],
+            ),
+            (
+                "attempts",
+                vec![
+                    "id",
+                    "pact_id",
+                    "member_token_hash",
+                    "proof_text",
+                    "explanation",
+                    "created_at",
+                ],
+            ),
+            (
+                "snapshots",
+                vec!["id", "attempt_id", "label", "proof_state", "position"],
+            ),
+        ] {
+            let query = format!("SELECT name FROM pragma_table_info('{table}') ORDER BY cid");
+            let actual: Vec<String> = sqlx::query_scalar(&query)
+                .fetch_all(&pool)
+                .await
+                .expect("read schema");
+            assert_eq!(actual, expected, "unexpected stored field in {table}");
+            assert!(!actual.iter().any(|name| name.contains("email")));
+        }
+
+        let input_with_email = serde_json::json!({
+            "creatorName": "Ada", "partnerName": "Emmy", "exerciseTitle": "A theorem",
+            "exerciseUrl": "https://lean-lang.org/", "theorem": "theorem one : 1 = 1 := by rfl",
+            "weekOf": "2026-08-24", "consent": true, "email": "ada@example.test"
+        });
+        assert!(serde_json::from_value::<CreatePact>(input_with_email).is_err());
+    }
 
     #[test]
     fn rejects_non_public_exercise_host() {
