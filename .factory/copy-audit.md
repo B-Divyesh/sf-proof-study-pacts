@@ -1,6 +1,6 @@
 # Landing copy audit
 
-Audited 2026-08-28 after polish round 2. Counts treat hyphenated terms as one
+Audited 2026-08-28 after polish round 3. Counts treat hyphenated terms as one
 word. No sentence is over 22 words. No banned word appears in visitor-facing
 landing copy.
 
