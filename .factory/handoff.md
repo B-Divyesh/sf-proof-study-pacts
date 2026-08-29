@@ -1,28 +1,50 @@
-# Proof Pact review 6 handoff
+# Proof Pact polish round 6 handoff
 
 ## Outcome
 
-This review made no product-code changes. The live build is
-`ff457a0886a3f440da8d14f3876d1bf5981b711d`, confirmed by `/health`.
-`.factory/review-6.md` records a **FAIL** with one minor copy finding:
-`F-6-1`, the README H1 is only the brand name rather than a plain-language
-document heading.
+Round 6 is complete with zero known findings. The README now opens with the
+job-specific h1 “Work through one Lean proof with a partner,” fixing `F-6-1`.
+A new documentation test protects that heading, the verb-first catalog line,
+the 120-character catalog limit, and the one-test-per-claim contract.
 
-## Verification performed
+The deployed application commit is
+`7eead27263a1d560b9819abf37d71b974670e0bc`. Azure revision
+`sf-proof-study-pacts--0000019` serves it at
+https://proof-study-pacts.sociobot.in, and `/health` returns that exact SHA.
+Deployment scale is `minReplicas=1`, `maxReplicas=1` so the SQLite-backed pact
+store is not split across instances.
 
-- Cold live visits at 390 × 844 and 1440 × 900 passed the first-read gate,
-  produced no console errors, and made only same-origin requests.
-- `npm run verify:live` passed against the deployed URL.
-- Fresh clone: `/tmp/proof-pact-review-6.igWtWu`; `npm ci` succeeded.
-- All 12 exact commands in `.factory/claims.json` passed independently.
-- Full fresh-clone `npm test` passed: Vite build, three Rust tests, and 30
-  Playwright checks. Initial JS was 28.27 kB raw / 9.16 kB gzip.
-- Live route, status, metadata, canonical, security-header, link, demo,
-  request-log, accessibility, focus, Back navigation, and offline checks are
-  detailed in the review.
+## Verification
 
-## Next step
+- Clean clone: `/tmp/proof-pact-polish-6-clean.buB7WL/source`.
+- All 12 claim commands from `.factory/claims.json`: passed independently.
+- `npm test`: passed — production build, 3 Rust tests, and 32 Playwright
+  checks. Log: `/tmp/proof-pact-polish-6-full.log`.
+- `cargo build --release --locked`: passed.
+- `npm audit --audit-level=high`: passed with zero vulnerabilities.
+- Build output: `frontend/dist/`; JS 28.27 kB raw / 9.16 kB gzip; CSS
+  19.58 kB raw / 5.12 kB gzip.
+- `npm run verify:live`: passed on the deployed SHA with zero console errors,
+  16 fresh-connection reads, demo save/reload/export/reset, stale-demo
+  recovery, partner sharing, route metadata, legal links, a true 404, all-route
+  axe checks, 44 px targets, Back focus restoration, privacy, and offline
+  reload. Log: `/tmp/proof-pact-polish-6-live-rerun.log`.
+- Worker URL verification: passed; report at
+  `/tmp/proof-pact-polish-6-verify/verify.json`.
+- Lighthouse mobile: Performance 99, Accessibility 100, Best Practices 100,
+  SEO 100; FCP 1.2 s, LCP 1.4 s, TBT 100 ms, CLS 0. Report:
+  `/tmp/proof-pact-polish-6-lighthouse-mobile.json`.
+- Load/rate smoke: 100 health requests returned 100 × 200 in 313 ms; a
+  28-write burst returned 20 × 200 and 8 × 429, all with `Retry-After: 1`.
+- Cold live status sweep: `/`, `/demo`, `/?demo=1`, `/privacy`, and `/terms`
+  returned 200; `/missing-page` returned 404; `robots.txt` and `sitemap.xml`
+  returned 200. CSP and security headers are present.
+- Screenshots: `.factory/evidence/polish-6/`.
 
-Change README line 1 to a job-specific H1 such as “Work through one Lean proof
-with a partner,” then rerun the copy audit and review. No other known product
-gap was found.
+Run locally with `npm ci && npm test`. Build the release container from the
+root `Dockerfile` with `BUILD_SHA` set to the source commit.
+
+## Known gaps and next steps
+
+None. `.factory/polish-6.md` maps every cumulative finding to its repair and
+fresh evidence. No severity is deferred.

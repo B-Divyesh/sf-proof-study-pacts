@@ -28,9 +28,9 @@ page.on('console', message => {
   const path = new URL(page.url()).pathname;
   const expectedNotFound = ['/missing-page', '/pact/missing-review-4', '/join/missing-review-4'].includes(path)
     && message.text().includes('status of 404');
-  if (message.type() === 'error' && !expectedNotFound) errors.push(message.text());
+  if (message.type() === 'error' && !expectedNotFound) errors.push(`${path}: ${message.text()}`);
 });
-page.on('pageerror', error => errors.push(error.message));
+page.on('pageerror', error => errors.push(`${new URL(page.url()).pathname}: ${error.message}`));
 
 const landingResponse = await page.goto(`${baseURL}/`, { waitUntil: 'networkidle' });
 check(landingResponse?.status() === 200, 'landing did not return 200');
