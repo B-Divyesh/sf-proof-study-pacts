@@ -20,11 +20,17 @@ test('@claim:free-access landing and demo open without an account or payment ste
 });
 
 test('@claim:demo-sandbox sample data opens in an isolated session workspace', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/?demo=1');
   await expect(page).toHaveURL(/\/demo$/);
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Natural Number Game');
   const session = JSON.parse(await page.evaluate(() => sessionStorage.getItem('demo:pact') || '{}')) as { id: string; token: string };
   await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
+  await expect(page.getByText('Mira — Prover', { exact: true })).toBeInViewport();
+  await expect(page.getByText('Theo — Explainer', { exact: true })).toBeInViewport();
+  await expect(page.locator('.demo-attempt-preview')).toBeInViewport({ ratio: 1 });
+  await expect(page.locator('.demo-attempt-preview')).toContainText('Mira’s saved attempt');
+  await expect(page.locator('.demo-attempt-preview')).toContainText('induction n with');
   expect(session.id).toMatch(/^demo-/);
   expect(session.token.length).toBeGreaterThan(30);
   expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);

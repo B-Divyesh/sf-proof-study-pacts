@@ -8,10 +8,10 @@
   },
   {
     "id": "demo-sandbox",
-    "claim": "The demo uses sample data in a separate session workspace.",
+    "claim": "The one-click demo shows both partner roles and saved sample work in a separate session workspace.",
     "where": "landing action, demo banner, README",
     "test": "npm test -- --grep @claim:demo-sandbox",
-    "sandbox": "fresh browser context at /demo; assert sample records, demo ID, sessionStorage key, and empty localStorage"
+    "sandbox": "fresh 390 x 844 browser at /?demo=1; assert both roles and one saved attempt are in the initial viewport, then verify reset and separate demo storage"
   },
   {
     "id": "markdown-export",

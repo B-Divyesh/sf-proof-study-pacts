@@ -6,7 +6,8 @@
   with `/demo`.
 - Sample: Mira and Theo work on Natural Number Game's `add_zero` exercise.
   Their pact includes two roles, two independent attempts, and two saved proof
-  states.
+  states. At 390 × 844, the first completed viewport shows both roles and
+  Mira's saved attempt before the full theorem and source details.
 - Storage: the server creates a random `demo-*` workspace with a 24-hour
   expiry. The browser stores only its key in `sessionStorage` under
   `demo:pact`. Demo mode does not read or write real pact browser keys.

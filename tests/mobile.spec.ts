@@ -9,6 +9,29 @@ test('mobile landing and demo fit a 390px viewport', async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
 });
 
+test('one-click demo shows both roles and saved sample work in the first mobile viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Try it with sample data' }).click();
+  await expect(page).toHaveURL(/\/demo$/);
+  await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
+
+  const visibleEvidence = [
+    page.getByText('Mira — Prover', { exact: true }),
+    page.getByText('Theo — Explainer', { exact: true }),
+    page.locator('.demo-attempt-preview').getByRole('heading', { name: 'Mira’s saved attempt' }),
+    page.locator('.demo-attempt-preview')
+  ];
+  for (const locator of visibleEvidence) {
+    await expect(locator).toBeVisible();
+    const box = await locator.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.y).toBeGreaterThanOrEqual(0);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(844);
+  }
+  await expect(page.locator('.demo-attempt-preview')).toContainText('induction n with');
+});
+
 test('keyboard reaches the first primary action', async ({ page }) => {
   await page.goto('/');
   await page.keyboard.press('Tab');

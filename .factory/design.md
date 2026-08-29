@@ -14,6 +14,11 @@ illustrated proof console. Ruled lines and numbered dials carry sections down
 the page. The product workspace uses one continuous bench rather than a grid of
 generic feature cards.
 
+On phones, the demo bench uses evidence-first order: its brass demo strip,
+session title, paired role channels, and one dark-green saved-attempt tape fit
+in the first viewport. The theorem plate follows below. This preserves the
+instrument-panel hierarchy while showing the pair's real work immediately.
+
 ## Palette
 
 | Token | Value | Use |

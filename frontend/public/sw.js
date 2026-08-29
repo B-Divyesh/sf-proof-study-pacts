@@ -1,4 +1,4 @@
-const CACHE = 'proof-pact-v2';
+const CACHE = 'proof-pact-v3';
 const SHELL = ['/', '/demo', '/privacy', '/terms', '/assets/hero-console-720.webp', '/assets/hero-console-1280.webp', '/assets/pact-mark.svg', '/favicon.svg'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL))));
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))));

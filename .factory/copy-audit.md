@@ -1,6 +1,6 @@
 # Landing copy audit
 
-Audited 2026-08-28 during polish round 4. Counts treat hyphenated terms as one
+Audited 2026-08-29 during polish round 5. Counts treat hyphenated terms as one
 word. No sentence is over 22 words. No banned word appears in visitor-facing
 landing copy.
 
@@ -70,5 +70,5 @@ This states the job, audience, change, and first action in one breath.
 Error pages have no decorative mood labels. Each heading names the problem,
 and each page gives a specific reason and recovery action.
 
-Catalog description (95 characters): “Build a weekly Lean proof routine with
-a partner, then export both attempts as a Markdown note.”
+Catalog description (101 characters): “Work through one Lean proof with a
+partner, compare both attempts, and export a shared Markdown note.”
