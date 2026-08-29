@@ -1,8 +1,6 @@
-# Proof Pact
+# Work through one Lean proof with a partner
 
-Work through one Lean proof with a partner.
-
-Proof Pact is for independent Lean 4 learners who want a small weekly routine.
+Proof Pact helps two independent Lean 4 learners keep a small weekly routine.
 Each pair chooses a public exercise and gets Prover and Explainer roles.
 They record separate attempts and export one Markdown note.
 Proof Pact records study work. Run Lean to check it.
