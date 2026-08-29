@@ -9,7 +9,7 @@ the 120-character catalog limit, and the one-test-per-claim contract.
 
 The deployed application commit is
 `7eead27263a1d560b9819abf37d71b974670e0bc`. Azure revision
-`sf-proof-study-pacts--0000019` serves it at
+`sf-proof-study-pacts--0000020` serves it at
 https://proof-study-pacts.sociobot.in, and `/health` returns that exact SHA.
 Deployment scale is `minReplicas=1`, `maxReplicas=1` so the SQLite-backed pact
 store is not split across instances.

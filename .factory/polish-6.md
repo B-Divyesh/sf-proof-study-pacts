@@ -1,9 +1,13 @@
 # Polish round 6 — zero-finding closure
 
-**Released candidate:** `ff457a0886a3f440da8d14f3876d1bf5981b711d`  
-**Review input:** `c5c7f5d1d9bbe9e24c7cad482fa518231e4a02cd`  
-**Application repair:** `7eead27263a1d560b9819abf37d71b974670e0bc`  
-**Live revision:** `sf-proof-study-pacts--0000019`  
+**Released candidate:** `ff457a0886a3f440da8d14f3876d1bf5981b711d`
+
+**Review input:** `c5c7f5d1d9bbe9e24c7cad482fa518231e4a02cd`
+
+**Application repair:** `7eead27263a1d560b9819abf37d71b974670e0bc`
+
+**Live revision:** `sf-proof-study-pacts--0000020`
+
 **Live URL:** https://proof-study-pacts.sociobot.in
 
 ## Result
