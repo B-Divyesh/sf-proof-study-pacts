@@ -1,43 +1,56 @@
-# Review 5 handoff
+# Proof Pact polish round 5 handoff
 
 ## Outcome
 
-Review 5 is **FAIL** with one blocking finding: `F-5-1` in
-`.factory/review-5.md`. The live one-click demo is isolated and functional, but
-at the required 390 × 844 mobile viewport it initially shows only the demo
-banner, header, theorem, and source link. The seeded roles and attempts are
-below the fold, so the first demo screen does not prove the product is being
-used with realistic sample data.
+Round 5 is complete with no known gap. The released demo now proves the
+product on its first 390 × 844 screen: the persistent sandbox banner, both
+partner roles, and Mira's saved attempt appear before theorem details. The
+warm enamel and dark-green proof-console identity is unchanged.
 
-No product code was changed in this review. The only repository changes are
-this handoff and `.factory/review-5.md`.
+All findings from reviews 1–5 are mapped to code and evidence in
+`.factory/polish-5.md`. The cumulative fixes for claims, copy, routing, titles,
+metadata, focus, 404 status, legal links, demo isolation, partner sharing,
+mobile targets, exercise links, errors, offline behavior, and rate limiting
+remain covered.
 
-## Verification
-
-- Fresh live landing checks at 390 × 844 and 1440 × 900 confirmed clear job,
-  audience, and first action without scrolling; no console errors or
-  third-party initial-load requests occurred.
-- Live demo confirmed `/demo`, realistic seeded data, persistent demo banner,
-  same-origin requests, reset to a new `demo-*` workspace, and no mutation of a
-  real-data `localStorage` sentinel.
-- Every exact command declared by `.factory/claims.json` passed independently
-  in clean clone `/tmp/proof-pact-review-5.q3MEVu` (12/12).
-- Full clean-clone `npm test` passed: build, 3 Rust tests, and 28 Playwright
-  tests.
-- Public routes, 404 status, headers, metadata, internal/external links,
-  history/focus behavior, and every prior review finding were rechecked.
-
-## Run and verify
+## How to run and verify
 
 ```sh
 npm ci
 npm test
+cargo build --release --locked
 npm run verify:live
 ```
 
-## Next step
+Every exact claim command is listed in `.factory/claims.json`. The direct demo
+URLs are `/?demo=1` and `/demo`. Reset uses a new `demo-*` workspace and never
+touches real pact keys.
 
-Repair `F-5-1`: redesign the demo’s mobile above-the-fold order so both named
-roles and at least one real sample attempt are visible immediately after the
-landing action. Add an initial-viewport Playwright assertion for that outcome,
-then rerun the complete adversarial review.
+## Exact evidence
+
+- Clean clone `/tmp/proof-pact-polish-5-clean.t6ecyW`: all 12 claim commands
+  passed independently; `npm test` passed 3 Rust and 30 Playwright tests.
+- Release build: `cargo build --release --locked` passed. Vite emitted
+  28.27 kB raw / 9.16 kB gzip JavaScript and 19.58 kB raw / 5.12 kB gzip CSS.
+- Dependency audit: zero known vulnerabilities.
+- Live URL: https://proof-study-pacts.sociobot.in.
+- Live container revision: `sf-proof-study-pacts--0000015`, constrained to
+  one replica for SQLite consistency.
+- Live cold mobile bounds: role labels y=282; saved-attempt preview y=337–512
+  in a 390 × 844 viewport. Screenshot:
+  `.factory/evidence/polish-5/demo-mobile-live.png`.
+- `npm run verify:live`: passed with zero browser errors and 16
+  fresh-connection reads. It also covered demo save/reload/export/reset,
+  partner sync, titles, metadata, Back focus and announcement, 404, legal
+  links, same-origin privacy, axe, touch targets, and offline policy reload.
+- `/opt/fleet/lib/verify-url.sh`: passed; evidence is
+  `/tmp/proof-pact-polish-5-verify/verify.json`.
+- Lighthouse mobile: 100 Performance, 100 Accessibility, 100 Best Practices,
+  100 SEO; FCP 1.2 s, LCP 1.4 s, TBT 80 ms, CLS 0.
+- Load smoke: 100 health requests returned 100 × 200 in 319 ms (313 rps).
+  Rate-limit smoke: 20 × 200 and 8 × 429; every 429 returned `Retry-After: 1`.
+
+## Known gaps and next steps
+
+None. The deployment must remain at one replica while it uses local SQLite;
+the deployed configuration is `minReplicas=1`, `maxReplicas=1`.

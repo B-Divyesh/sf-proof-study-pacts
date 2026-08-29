@@ -3,7 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { mkdir, readFile } from 'node:fs/promises';
 
 const baseURL = process.env.LIVE_URL || 'https://proof-study-pacts.sociobot.in';
-const evidenceDir = process.env.EVIDENCE_DIR || '/tmp/proof-pact-polish-2-live';
+const evidenceDir = process.env.EVIDENCE_DIR || '/tmp/proof-pact-polish-5-live';
 await mkdir(evidenceDir, { recursive: true });
 
 function check(condition, message) {
@@ -64,6 +64,15 @@ await page.goto(`${baseURL}/?demo=1`, { waitUntil: 'networkidle' });
 check(new URL(page.url()).pathname === '/demo', '?demo=1 did not enter /demo');
 await page.getByText('Mira’s attempt').waitFor();
 await page.getByText('Demo — sample data, nothing is saved').waitFor();
+for (const locator of [
+  page.getByText('Mira — Prover', { exact: true }),
+  page.getByText('Theo — Explainer', { exact: true }),
+  page.getByRole('heading', { name: 'Mira’s saved attempt' }),
+  page.locator('.demo-attempt-preview')
+]) {
+  const box = await locator.boundingBox();
+  check(Boolean(box && box.y >= 0 && box.y + box.height <= 844), 'sample role or saved attempt is below the first mobile demo screen');
+}
 const initialDemo = JSON.parse(await page.evaluate(() => sessionStorage.getItem('demo:pact')));
 await page.screenshot({ path: `${evidenceDir}/demo-mobile.png`, fullPage: true });
 await page.getByLabel('Lean proof attempt').fill('by\n  exact Nat.add_zero 19');
