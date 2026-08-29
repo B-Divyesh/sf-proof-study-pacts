@@ -34,7 +34,9 @@ touches real pact keys.
   28.27 kB raw / 9.16 kB gzip JavaScript and 19.58 kB raw / 5.12 kB gzip CSS.
 - Dependency audit: zero known vulnerabilities.
 - Live URL: https://proof-study-pacts.sociobot.in.
-- Live container revision: `sf-proof-study-pacts--0000015`, constrained to
+- Deployed source: `8228b18bcaf698f253d4759c61c31741be69fe73`;
+  `/health` reports that exact SHA.
+- Live container revision: `sf-proof-study-pacts--0000017`, constrained to
   one replica for SQLite consistency.
 - Live cold mobile bounds: role labels y=282; saved-attempt preview y=337–512
   in a 390 × 844 viewport. Screenshot:

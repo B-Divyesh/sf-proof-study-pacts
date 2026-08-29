@@ -3,6 +3,7 @@
 **Reviewed release candidate:** `0603252c504ab1590aed45a121ba19abfd99f0d7`  
 **Review input:** `ed9c1690aa429612126ef7d0d65b596b28faed51`  
 **Application repair:** `cd41527188cdd0e3a334c6564c743d7c104e30c7`  
+**Deployed source:** `8228b18bcaf698f253d4759c61c31741be69fe73`
 **Live URL:** https://proof-study-pacts.sociobot.in
 
 ## Result
@@ -56,10 +57,10 @@ theorem and source details follow below it. No finding remains open.
 - `cargo build --release --locked` and `npm audit --audit-level=high` passed.
 - Initial JavaScript is 28.27 kB raw / 9.16 kB gzip. CSS is 19.58 kB raw /
   5.12 kB gzip.
-- The live verifier passed with zero console errors, 16 fresh-connection reads,
+- The final live verifier passed with zero console errors, 16 fresh-connection reads,
   demo save/reload/export/reset, partner sharing, route metadata, legal links,
   404 status, axe, 44 px targets, focus restoration, and offline reload. Log:
-  `/tmp/proof-pact-polish-5-live-check.log`.
+  `/tmp/proof-pact-polish-5-live-final-check.log`.
 - Worker URL verification passed at
   `/tmp/proof-pact-polish-5-verify/verify.json`.
 - Live Lighthouse mobile: Performance 100, Accessibility 100, Best Practices
